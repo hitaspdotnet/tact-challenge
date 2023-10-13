@@ -25,12 +25,14 @@ contract Task2 with Deployable {
   }
   
   receive(msg: Refund) {
-    send(SendParameters {
+    if(sender() == self.admin) {
+      send(SendParameters {
         to: msg.sender,
-        value: context().value,
-        mode: SendIgnoreErrors,
+        value: 0,
+        mode: SendRemainingValue + SendIgnoreErrors,
         body: emptyCell()
-    });
+      });
+    }
   }
 
   receive(msg: Slice) {
