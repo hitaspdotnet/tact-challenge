@@ -17,11 +17,6 @@ message(0x44) Refund {
   sender: Address;
 }
 
-struct Output {
-    sender: Address;
-    msg: Slice;
-}
-
 contract Task2 with Deployable {
   admin: Address;
 
@@ -43,7 +38,6 @@ contract Task2 with Deployable {
       to: self.admin,
       value: 0, 
       mode: SendRemainingValue,
-      bounce: true, 
       body: beginCell().storeAddress(sender()).storeRef(msg.asCell()).endCell()
     });
   }
