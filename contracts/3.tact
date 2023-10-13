@@ -51,12 +51,29 @@ contract Task3 with Deployable {
     self.decimal = 1000000000;
   }
 
-  receive(msg: TokenNotification) {
-  } 
+  // receive(msg: TokenNotification) {
+  // } 
   
   get fun price(token: Address): Int { 
+    let n: Int = 0;
+    
+    if(token == self.jAddressA){
+      n = self.b / self.a;
+    } 
+    
+    if(token == self.jAddressB) {
+      n = self.a / self.b;
+    }
+    return n;
   }
   
   get fun balance(token: Address): Int { 
+    if(token == self.jAddressA){
+      return self.a;
+    } 
+    
+    if(token == self.jAddressB) {
+      return self.b;
+    }
   }
 }
