@@ -39,12 +39,14 @@ contract Task2 with Deployable {
   }
 
   receive(msg: Slice) {
-    send(SendParameters{
+    if(sender() != self.admin){
+      send(SendParameters{
         to: self.admin,
         value: 0, 
         mode: SendRemainingValue, 
         bounce: true, 
         body: Output{ sender: sender(), msg: msg }.toCell()
-    });
+      });
+    }
   }
 }
