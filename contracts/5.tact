@@ -81,7 +81,8 @@ contract Task5 with Deployable {
       self.next_item = self.next_item + 1;
     } else { 
       require(self.next_item > 0, "Empty pool");
-      let swap: Bool = ctx.value - ton("2.1") >= 0;
+      let msgValue: Int = ctx.value - ton("2.1");
+      let swap: Bool = msgValue >= 0;
       let refund: Bool = ctx.value - ton("0.08") >= 0;
 
       if(!swap){
@@ -108,8 +109,8 @@ contract Task5 with Deployable {
         if(luck == self.next_item) {
           send(SendParameters{
             to: ctx.sender,
-            value: ctx.value - ton("2"),
-            mode: SendPayGasSeparately,
+            value: msgValue,
+            mode: SendPayGasSeparately + SendIgnoreErrors,
             body: Transfer {
               queryId: msg.queryId,
               newOwner: msg.prevOwner,
@@ -125,8 +126,8 @@ contract Task5 with Deployable {
           
           send(SendParameters{
             to: swapItemAddress,
-            value: ctx.value - ton("2"),
-            mode: SendPayGasSeparately,
+            value: msgValue,
+            mode: SendPayGasSeparately + SendIgnoreErrors,
             body: Transfer {
               queryId: msg.queryId,
               newOwner: msg.prevOwner,
