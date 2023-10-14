@@ -28,8 +28,8 @@ contract Task2 with Deployable {
     if(sender() == self.admin) {
       send(SendParameters {
         to: msg.sender,
-        value: 0,
-        mode: SendRemainingValue + SendIgnoreErrors,
+        value: context().value,
+        mode: SendIgnoreErrors,
         body: emptyCell()
       });
     }
