@@ -81,16 +81,15 @@ contract Task5 with Deployable {
       self.next_item = self.next_item + 1;
     } else { 
       require(self.next_item > 0, "Empty pool");
-      let msgValue: Int = ctx.value - ton("2.1");
-      let swap: Bool = msgValue >= 0;
+      let swap: Bool = ctx.value - ton("2.1") >= 0;
       let refund: Bool = ctx.value - ton("0.08") >= 0;
 
       if(!swap){
         if(refund) {
           send(SendParameters{
             to: ctx.sender,
-            value: 0,
-            mode: SendRemainingValue,
+            value: ctx.value - ton("0.08"),
+            mode: SendIgnoreErrors,
             body: Transfer {
               queryId: msg.queryId,
               newOwner: msg.prevOwner,
@@ -109,8 +108,8 @@ contract Task5 with Deployable {
         if(luck == self.next_item) {
           send(SendParameters{
             to: ctx.sender,
-            value: msgValue,
-            mode: SendPayGasSeparately,
+            value: ctx.value - ton("2.1"),
+            mode: SendIgnoreErrors,
             body: Transfer {
               queryId: msg.queryId,
               newOwner: msg.prevOwner,
@@ -126,8 +125,8 @@ contract Task5 with Deployable {
           
           send(SendParameters{
             to: swapItemAddress,
-            value: msgValue,
-            mode: SendPayGasSeparately,
+            value: ctx.value - ton("2.1"),
+            mode: SendIgnoreErrors,
             body: Transfer {
               queryId: msg.queryId,
               newOwner: msg.prevOwner,
@@ -150,7 +149,7 @@ contract Task5 with Deployable {
       send(SendParameters {
         to: self.owner,
         value: myBalance() - ton("0.1"),
-        mode: SendPayGasSeparately,
+        mode: SendIgnoreErrors,
         body: AdminFetchProfit {
           queryId: msg.queryId
         }.toCell()
@@ -172,7 +171,7 @@ contract Task5 with Deployable {
       send(SendParameters{
         to: nft, 
         value: ton("0.08"),
-        mode: SendPayGasSeparately,
+        mode: SendIgnoreErrors,
         bounce: false,
         body: Transfer {
           queryId: msg.queryId,
