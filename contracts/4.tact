@@ -65,8 +65,7 @@ contract Task4 with Deployable {
     } else {
       send(SendParameters{
         to: sender(),
-        value: 0, 
-        bounce: true,
+        value: 0,
         mode: SendRemainingValue + SendIgnoreErrors,
         body: Transfer {
           queryId: msg.queryId,
@@ -74,7 +73,7 @@ contract Task4 with Deployable {
           responseDestination: msg.prevOwner,
           customPayload: null,
           forwardAmount: 0,
-          forwardPayload: msg.forwardPayload
+          forwardPayload: emptySlice()
         }.toCell()
       });
     }
@@ -105,6 +104,10 @@ contract Task4 with Deployable {
           forwardPayload: emptySlice()
         }.toCell()
       });
+      
+      self.owner = null;
+      self.nft = null;
+      self.lockUntil = 0;
     }
   }
 
