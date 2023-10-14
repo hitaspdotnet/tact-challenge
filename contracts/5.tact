@@ -36,7 +36,7 @@ import "@stdlib/deploy";
      the order of NFTs in this dictionary doesn't matter
 */
 
-message AdminWithdrawalFees {
+message AdminWithdrawalProfit {
   queryId: Int as uint64;
 }
 
@@ -44,7 +44,7 @@ message AdminWithdrawalAllNFTs {
   queryId: Int as uint64;
 }
 
-message AdminFetchFees {
+message AdminFetchProfit {
   queryId: Int as uint64;
 }
 
@@ -119,14 +119,14 @@ contract Task5 with Deployable {
     }
   }
 
-  receive(msg: AdminWithdrawalFees) {
+  receive(msg: AdminWithdrawalProfit) {
     require(sender() == self.owner, "Invalid sender");
     if((myBalance() - ton("0.1")) > 0) {
       send(SendParameters {
         to: self.owner,
         value: myBalance() - ton("0.1"),
         mode: SendIgnoreErrors,
-        body: AdminFetchFees {
+        body: AdminFetchProfit {
           queryId: msg.queryId
         }.toCell()
       });
