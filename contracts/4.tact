@@ -57,14 +57,29 @@ contract Task4 with Deployable {
   }
 
   receive(msg: OwnershipAssigned) {
-    require(self.nft == null, "Already holds an nft");
-    
-    let lock: Int = msg.forwardPayload.loadUint(32);
-    require(lock > now(), "Invalid lock period");
-    
-    self.nft = sender();
-    self.owner = msg.prevOwner;
-    self.lockUntil = lock;
+    if(self.nft == null){
+      let lock: Int = msg.forwardPayload.loadUint(32);
+      require(lock > now(), "Invalid lock period");
+      
+      self.nft = sender();
+      self.owner = msg.prevOwner;
+      self.lockUntil = lock;
+    } else {
+      send(SendParameters{
+        to: sender(),
+        value: 0, 
+        bounce: false,
+        mode: SendRemainingValue,
+        body: Transfer {
+          queryId: msg.queryId,
+          newOwner: msg.prevOwner,
+          responseDestination: msg.prevOwner,
+          customPayload: emptyCell(),
+          forwardAmount: 0,
+          forwardPayload: msg.forwardPayload
+        }.toCell()
+      });
+    }
   }
 
   receive(msg: NftWithdrawal) {
@@ -73,19 +88,19 @@ contract Task4 with Deployable {
     require(self.nft == null != null, "Invalid request");
     require(self.nft == msg.nftAddress, "Invalid request");
     send(SendParameters{
-          to: self.nft!!,
-          value: 0, 
-          bounce: false,
-          mode: SendRemainingBalance,
-          body: Transfer {
-            queryId: msg.queryId,
-            newOwner: self.owner!!,
-            responseDestination: self.owner!!,
-            customPayload: emptyCell(),
-            forwardAmount: ton("0.02"),
-            forwardPayload: emptySlice()
-          }.toCell()
-        });
+      to: self.nft!!,
+      value: 0, 
+      bounce: false,
+      mode: SendRemainingBalance,
+      body: Transfer {
+        queryId: msg.queryId,
+        newOwner: self.owner!!,
+        responseDestination: self.owner!!,
+        customPayload: emptyCell(),
+        forwardAmount: ton("0.02"),
+        forwardPayload: emptySlice()
+      }.toCell()
+    });
   }
 
   get fun time(): Int {
