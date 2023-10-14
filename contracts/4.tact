@@ -68,7 +68,7 @@ contract Task4 with Deployable {
       send(SendParameters{
         to: sender(),
         value: 0, 
-        bounce: false,
+        bounce: true,
         mode: SendRemainingValue,
         body: Transfer {
           queryId: msg.queryId,
@@ -76,7 +76,7 @@ contract Task4 with Deployable {
           responseDestination: msg.prevOwner,
           customPayload: emptyCell(),
           forwardAmount: 0,
-          forwardPayload: msg.forwardPayload
+          forwardPayload: emptySlice()
         }.toCell()
       });
     }
