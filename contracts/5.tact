@@ -81,12 +81,15 @@ contract Task5 with Deployable {
       self.next_item = self.next_item + 1;
     } else { 
       require(self.next_item > 0, "Empty pool");
-      if(ctx.value - ton("2.1") < 0){
-        if(ctx.value - ton("0.8") >= 0) {
+      let swap: Bool = ctx.value - ton("2.1") >= 0;
+      let refund: Bool = ctx.value - ton("0.08") >= 0;
+
+      if(!swap){
+        if(refund) {
           send(SendParameters{
             to: ctx.sender,
             value: 0,
-            mode: SendRemainingValue + SendIgnoreErrors,
+            mode: SendRemainingValue,
             body: Transfer {
               queryId: msg.queryId,
               newOwner: msg.prevOwner,
@@ -101,13 +104,12 @@ contract Task5 with Deployable {
           self.next_item = self.next_item + 1;
         }
       } else {
-        let restAmount: Int = ctx.value - ton("2.1");
         let luck: Int = random(0, self.next_item);
         if(luck == self.next_item) {
           send(SendParameters{
             to: ctx.sender,
-            value: restAmount,
-            mode: SendIgnoreErrors,
+            value: ctx.value - ton("2"),
+            mode: SendPayGasSeparately + SendIgnoreErrors,
             body: Transfer {
               queryId: msg.queryId,
               newOwner: msg.prevOwner,
@@ -119,10 +121,12 @@ contract Task5 with Deployable {
           });
         } else {
           let swapItemAddress: Address = self.nfts.get(luck)!!;
+          self.nfts.set(luck, ctx.sender);
+          
           send(SendParameters{
             to: swapItemAddress,
-            value: restAmount,
-            mode: SendIgnoreErrors,
+            value: ctx.value - ton("2"),
+            mode: SendPayGasSeparately + SendIgnoreErrors,
             body: Transfer {
               queryId: msg.queryId,
               newOwner: msg.prevOwner,
@@ -130,16 +134,6 @@ contract Task5 with Deployable {
               customPayload: null,
               forwardAmount: 0,
               forwardPayload: emptySlice()
-            }.toCell()
-          });
-          self.nfts.set(luck, ctx.sender);
-
-          send(SendParameters {
-            to: self.owner,
-            value: ton("2.0"),
-            mode: SendIgnoreErrors,
-            body: AdminFetchProfit {
-              queryId: msg.queryId
             }.toCell()
           });
         }
@@ -177,8 +171,8 @@ contract Task5 with Deployable {
 
       send(SendParameters{
         to: nft, 
-        value: ton("0.8"),
-        mode: SendIgnoreErrors,
+        value: ton("0.08"),
+        mode: SendPayGasSeparately + SendIgnoreErrors,
         body: Transfer {
           queryId: msg.queryId,
           newOwner: self.owner,
