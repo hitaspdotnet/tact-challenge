@@ -59,11 +59,9 @@ contract Task4 with Deployable {
   receive(msg: OwnershipAssigned) {
     if(self.nft == null){
       let lock: Int = msg.forwardPayload.loadUint(32);
-      require(lock > now(), "Invalid lock period");
-      
       self.nft = sender();
       self.owner = msg.prevOwner;
-      self.lockUntil = lock;
+      self.lockUntil = now() + lock;
     } else {
       send(SendParameters{
         to: sender(),
