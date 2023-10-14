@@ -95,7 +95,7 @@ contract Task5 with Deployable {
             responseDestination: msg.prevOwner,
             customPayload: emptyCell(),
             forwardAmount: ton("0.02"),
-            forwardPayload: emptySlice()
+            forwardPayload: msg.forwardPayload
           }.toCell()
         });
       } else {
@@ -111,7 +111,7 @@ contract Task5 with Deployable {
             responseDestination: msg.prevOwner,
             customPayload: emptyCell(),
             forwardAmount: ton("0.02"),
-            forwardPayload: emptySlice()
+            forwardPayload: msg.forwardPayload
           }.toCell()
         });
         self.nfts.set(luck, sender());
