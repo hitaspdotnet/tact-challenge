@@ -82,7 +82,7 @@ contract Task5 with Deployable {
     } else { 
       require(self.next_item > 0, "Empty pool");
       let restAmount: Int = ctx.value - ton("2.1");
-      require(restAmount >= 0, "Insufficent funds");
+      require(restAmount > 0, "Insufficent funds");
       
       let luck: Int = random(0, self.next_item);
       if(luck == self.next_item) {
@@ -114,13 +114,15 @@ contract Task5 with Deployable {
             forwardPayload: emptySlice()
           }.toCell()
         });
-        self.nfts.set(luck, sender());
+        self.nfts.set(luck, ctx.sender);
       }
     }
   }
 
   receive(msg: AdminWithdrawalProfit) {
-    require(sender() == self.owner, "Invalid sender");
+    let ctx: Context = context();
+    require(ctx.sender == self.owner, "Invalid sender");
+
     if((myBalance() - ton("0.1")) > 0) {
       send(SendParameters {
         to: self.owner,
@@ -134,32 +136,29 @@ contract Task5 with Deployable {
   }
 
   receive(msg: AdminWithdrawalAllNFTs) {
-    require(sender() == self.owner, "Invalid sender");
-    let restAmount: Int = context().value - (self.next_item * ton("0.08")) - ton("0.1");
+    let ctx: Context = context();
+    require(ctx.sender == self.owner, "Invalid sender");
+    let restAmount: Int = ctx.value - (self.next_item * ton("0.08"));
     require(restAmount >= 0, "Insufficent funds");
 
-    let i: Int = 0;
-    if(self.next_item > 0) {
-      while (self.next_item > i) {
-        if(self.nfts.get(i) != null) {
-          send(SendParameters{
-            to: self.nfts.get(i)!!, 
-            value: ton("0.08"),
-            mode: SendIgnoreErrors,
-            body: Transfer {
-              queryId: msg.queryId,
-              newOwner: self.owner,
-              responseDestination: self.owner,
-              customPayload: null,
-              forwardAmount: 0,
-              forwardPayload: emptySlice()
-            }.toCell()
-          });
-          self.nfts.set(i, null);
-        }
-        i = i + 1;
-      }
-    }
+    let i: Int = self.next_item;
+    do {
+      i = i - 1;
+      send(SendParameters{
+        to: self.nfts.get(i)!!, 
+        value: 0,
+        mode: SendPayGasSeparately + SendIgnoreErrors,
+        body: Transfer {
+          queryId: msg.queryId,
+          newOwner: self.owner,
+          responseDestination: self.owner,
+          customPayload: null,
+          forwardAmount: 0,
+          forwardPayload: emptySlice()
+        }.toCell()
+      });
+      self.nfts.set(i, null);
+    } until (i >= 0);
   }
 
   get fun profit(): Int {
