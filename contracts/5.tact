@@ -88,8 +88,8 @@ contract Task5 with Deployable {
         if(refund) {
           send(SendParameters{
             to: ctx.sender,
-            value: ctx.value - ton("0.08"),
-            mode: SendIgnoreErrors,
+            value: 0,
+            mode: SendRemainingValue,
             body: Transfer {
               queryId: msg.queryId,
               newOwner: msg.prevOwner,
@@ -105,11 +105,12 @@ contract Task5 with Deployable {
         }
       } else {
         let luck: Int = random(0, self.next_item);
+        ctx.value = ctx.value - ton("2.1");
         if(luck == self.next_item) {
           send(SendParameters{
             to: ctx.sender,
-            value: ctx.value - ton("2.1"),
-            mode: SendIgnoreErrors,
+            value: 0,
+            mode: SendRemainingValue,
             body: Transfer {
               queryId: msg.queryId,
               newOwner: msg.prevOwner,
@@ -125,8 +126,8 @@ contract Task5 with Deployable {
           
           send(SendParameters{
             to: swapItemAddress,
-            value: ctx.value - ton("2.1"),
-            mode: SendIgnoreErrors,
+            value: 0,
+            mode: SendRemainingValue,
             body: Transfer {
               queryId: msg.queryId,
               newOwner: msg.prevOwner,
@@ -146,10 +147,11 @@ contract Task5 with Deployable {
     require(ctx.sender == self.owner, "Insufficient privelegies");
 
     if((myBalance() - ton("0.1")) > 0) {
+      let value: Int = myBalance() - ton("0.1");
       send(SendParameters {
         to: self.owner,
-        value: myBalance() - ton("0.1"),
-        mode: SendIgnoreErrors,
+        value: value,
+        mode: SendRemainingValue,
         body: AdminFetchProfit {
           queryId: msg.queryId
         }.toCell()
