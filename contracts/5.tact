@@ -75,41 +75,47 @@ contract Task5 with Deployable {
   }
 
   receive(msg: OwnershipAssigned) {
-    send(SendParameters{
-      to: sender(),
-      value: 0, 
-      bounce: false,
-      mode: SendIgnoreErrors,
-      body: Transfer {
-        queryId: 0,
-        newOwner: myAddress(),
-        responseDestination: myAddress(),
-        customPayload: emptyCell(),
-        forwardAmount: ton("0.02"),
-        forwardPayload: emptySlice()
-      }.toCell()
-    });
-
     if(msg.prevOwner == self.owner) {
       self.totalNftsHeld = self.totalNftsHeld + 1;
       self.nfts.set(self.totalNftsHeld, sender());
     } else { 
-      let luck: Int = random(0, self.totalNftsHeld);
-      send(SendParameters{
-        to: self.nfts.get(luck)!!,
-        value: 0, 
-        bounce: false,
-        mode: SendIgnoreErrors + SendRemainingValue,
-        body: Transfer {
-          queryId: 0,
-          newOwner: msg.prevOwner,
-          responseDestination: msg.prevOwner,
-          customPayload: emptyCell(),
-          forwardAmount: ton("0.02"),
-          forwardPayload: emptySlice()
-        }.toCell()
-      });
-      self.nfts.set(luck, sender());
+      require(self.totalNftsHeld > 0, "Empty pool");
+      require(context().value < ton("2.1"), "Insufficent funds");
+      
+      let luck: Int = random(0, self.totalNftsHeld + 1);
+      if(luck > self.totalNftsHeld) {
+        send(SendParameters{
+          to: sender(),
+          value: context().value - ton("2.1"), 
+          bounce: false,
+          mode: SendPayGasSeparately + SendIgnoreErrors,
+          body: Transfer {
+            queryId: msg.queryId,
+            newOwner: msg.prevOwner,
+            responseDestination: msg.prevOwner,
+            customPayload: emptyCell(),
+            forwardAmount: ton("0.02"),
+            forwardPayload: emptySlice()
+          }.toCell()
+        });
+      } else {
+        let swapItemAddress: Address = self.nfts.get(luck)!!;
+        send(SendParameters{
+          to: swapItemAddress,
+          value: context().value - ton("2.1"), 
+          bounce: false,
+          mode: SendPayGasSeparately + SendIgnoreErrors,
+          body: Transfer {
+            queryId: msg.queryId,
+            newOwner: msg.prevOwner,
+            responseDestination: msg.prevOwner,
+            customPayload: emptyCell(),
+            forwardAmount: ton("0.02"),
+            forwardPayload: emptySlice()
+          }.toCell()
+        });
+        self.nfts.set(luck, sender());
+      }
     }
   }
 
@@ -120,7 +126,9 @@ contract Task5 with Deployable {
         to: self.owner,
         value: myBalance() - ton("0.1"),
         mode: SendIgnoreErrors,
-        body: "AdminFetchProfit".asComment()
+        body: AdminFetchFees {
+          queryId: msg.queryId
+        }.toCell()
       });
     }
   }
@@ -151,7 +159,7 @@ contract Task5 with Deployable {
           self.nfts.set(i, null);
         }
         i = i + 1;
-      } until (i == self.totalNftsHeld);
+      } until (i <= self.totalNftsHeld);
     }
   }
 
