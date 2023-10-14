@@ -26,8 +26,7 @@ contract Task2 with Deployable {
   }
   
   receive(msg: Refund) {
-    let ctx: Context = context();
-    require(ctx.sender == self.admin, "Invalid sender");
+    require(sender() == self.admin, "Invalid sender");
     send(SendParameters {
       to: msg.sender,
       value: 0,
@@ -37,12 +36,11 @@ contract Task2 with Deployable {
   }
 
   receive(msg: Slice) {
-    let ctx: Context = context();
     send(SendParameters{
       to: self.admin,
       value: 0, 
       mode: SendRemainingValue,
-      body: beginCell().storeAddress(ctx.sender).storeRef(msg.asCell()).endCell()
+      body: beginCell().storeAddress(sender()).storeRef(msg.asCell()).endCell()
     });
   }
 }
