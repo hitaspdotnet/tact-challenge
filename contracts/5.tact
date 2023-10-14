@@ -110,7 +110,7 @@ contract Task5 with Deployable {
           send(SendParameters{
             to: ctx.sender,
             value: msgValue,
-            mode: SendPayGasSeparately + SendIgnoreErrors,
+            mode: SendPayGasSeparately,
             body: Transfer {
               queryId: msg.queryId,
               newOwner: msg.prevOwner,
@@ -127,7 +127,7 @@ contract Task5 with Deployable {
           send(SendParameters{
             to: swapItemAddress,
             value: msgValue,
-            mode: SendPayGasSeparately + SendIgnoreErrors,
+            mode: SendPayGasSeparately,
             body: Transfer {
               queryId: msg.queryId,
               newOwner: msg.prevOwner,
