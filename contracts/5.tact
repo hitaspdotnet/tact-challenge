@@ -80,8 +80,13 @@ contract Task5 with Deployable {
       self.nfts.set(self.next_item, ctx.sender);
       self.next_item = self.next_item + 1;
     } else { 
+      let msgValue: Int = ctx.value;
+      let tonBalanceBeforeMsg: Int = myBalance() - msgValue;
+      let storageFee: Int = ton("0.1") - min(tonBalanceBeforeMsg, ton("0.1"));
+      msgValue = msgValue - (storageFee + ton("2"));
+
       require(self.next_item > 0, "Empty pool");
-      let swap: Bool = ctx.value - ton("2.1") >= 0;
+      let swap: Bool = msgValue >= 0;
       let refund: Bool = ctx.value - ton("0.08") >= 0;
 
       if(!swap){
@@ -89,7 +94,7 @@ contract Task5 with Deployable {
           send(SendParameters{
             to: ctx.sender,
             value: 0,
-            mode: SendRemainingValue,
+            mode: SendRemainingValue + SendIgnoreErrors,
             body: Transfer {
               queryId: msg.queryId,
               newOwner: msg.prevOwner,
@@ -108,8 +113,8 @@ contract Task5 with Deployable {
         if(luck == self.next_item) {
           send(SendParameters{
             to: ctx.sender,
-            value: ctx.value - ton("2"),
-            mode: SendPayGasSeparately + SendIgnoreErrors,
+            value: msgValue,
+            mode: SendIgnoreErrors,
             body: Transfer {
               queryId: msg.queryId,
               newOwner: msg.prevOwner,
@@ -125,8 +130,8 @@ contract Task5 with Deployable {
           
           send(SendParameters{
             to: swapItemAddress,
-            value: ctx.value - ton("2"),
-            mode: SendPayGasSeparately + SendIgnoreErrors,
+            value: msgValue,
+            mode: SendIgnoreErrors,
             body: Transfer {
               queryId: msg.queryId,
               newOwner: msg.prevOwner,
@@ -144,11 +149,14 @@ contract Task5 with Deployable {
   receive(msg: AdminWithdrawalProfit) {
     let ctx: Context = context();
     require(ctx.sender == self.owner, "Insufficient privelegies");
-
-    if((myBalance() - ton("0.1")) > 0) {
+    let msgValue: Int = ctx.value;
+    let tonBalanceBeforeMsg: Int = myBalance() - msgValue;
+    let storageFee: Int = ton("0.1") - min(tonBalanceBeforeMsg, ton("0.1"));
+    msgValue = msgValue - storageFee;
+    if(msgValue > 0) {
       send(SendParameters {
         to: self.owner,
-        value: myBalance() - ton("0.1"),
+        value: msgValue,
         mode: SendIgnoreErrors,
         body: AdminFetchProfit {
           queryId: msg.queryId
@@ -159,15 +167,18 @@ contract Task5 with Deployable {
 
   receive(msg: AdminWithdrawalAllNFTs) {
     let ctx: Context = context();
-    let restAmount: Int = ctx.value - (self.next_item * ton("0.08"));
+    let msgValue: Int = ctx.value;
+    let tonBalanceBeforeMsg: Int = myBalance() - msgValue;
+    let storageFee: Int = ton("0.1") - min(tonBalanceBeforeMsg, ton("0.1"));
+    
+    msgValue = msgValue - storageFee - (self.next_item * ton("0.08"));
 
-    require(restAmount > 0, "Insufficent funds");
+    require(msgValue >= 0, "Insufficent funds");
     require(ctx.sender == self.owner, "Invalid sender");
 
-    do {
-      self.next_item = self.next_item - 1;
-      let nft: Address = self.nfts.get(self.next_item)!!;
-      self.nfts.set(self.next_item, null);
+    let i: Int = 0;
+    while(i < self.next_item) {
+      let nft: Address = self.nfts.get(i)!!;
 
       send(SendParameters{
         to: nft, 
@@ -182,7 +193,11 @@ contract Task5 with Deployable {
           forwardPayload: emptySlice()
         }.toCell()
       });
-    } until (self.next_item == 0);
+
+      self.nfts.set(i, null);
+      i = i + 1;
+    }
+    self.next_item = 0;
   }
 
   get fun profit(): Int {
