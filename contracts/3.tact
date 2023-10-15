@@ -91,7 +91,7 @@ contract Task3 with Deployable {
       let address_dst: Address = self.jettonAddressB;
       let balance_src: Int = self.aAmount;
       let balance_dst: Int = self.bAmount;
-      
+
       if(ctx.sender == self.jettonAddressB) {
         address_src = self.jettonAddressB;
         address_dst = self.jettonAddressA;
@@ -144,11 +144,11 @@ contract Task3 with Deployable {
 
   get fun price(jetton: Address): Int { 
     if(jetton == self.jettonAddressA) {
-      return calc_price(self.aAmount, self.bAmount, self.decimal);
+      return calc_price(self.aAmount, self.bAmount, 1);
     }
 
     if(jetton == self.jettonAddressB) {
-      return calc_price(self.bAmount, self.aAmount, self.decimal);
+      return calc_price(self.bAmount, self.aAmount, 1);
     }
     return 0;
   }
