@@ -165,7 +165,7 @@ contract Task5 with Deployable {
 
   receive(msg: AdminWithdrawalProfit) {
     let ctx: Context = context();
-    require(ctx.sender == self.owner, "Insufficient privelegies");
+    require(ctx.sender == self.owner, "Insufficient privileges");
     nativeReserve(ton("0.1"), 0);
     
     send(SendParameters {
