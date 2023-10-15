@@ -103,30 +103,12 @@ contract Task5 with Deployable {
       });
       return;
     } 
-
-    if(self.next_item == 0) {
-      nativeReserve(myBalance() + ton("2"), 0);
-      send(SendParameters{
-        to: ctx.sender,
-        value: 0,
-        mode: SendRemainingValue,
-        body: Transfer {
-          queryId: msg.queryId,
-          newOwner: msg.prevOwner,
-          responseDestination: msg.prevOwner,
-          customPayload: null,
-          forwardAmount: 0,
-          forwardPayload: emptySlice()
-        }.toCell()
-      });
-      return;
-    }
-    
+   
     if(swap) {
       let luck: Int = random(0, self.next_item);
-      nativeReserve(myBalance() + ton("2"), 0);
+      nativeReserve(myBalance() - (ctx.value - ton("2")), 0);
 
-      if(luck == self.next_item) {
+      if(self.next_item == 0 || luck == self.next_item) {
         send(SendParameters{
           to: ctx.sender,
           value: 0,
@@ -140,24 +122,25 @@ contract Task5 with Deployable {
             forwardPayload: emptySlice()
           }.toCell()
         });
-      } else {
-        let swapItemAddress: Address = self.nfts.get(luck)!!;
-        self.nfts.set(luck, ctx.sender);
-        
-        send(SendParameters{
-          to: swapItemAddress,
-          value: 0,
-          mode: SendRemainingValue,
-          body: Transfer {
-            queryId: msg.queryId,
-            newOwner: msg.prevOwner,
-            responseDestination: msg.prevOwner,
-            customPayload: null,
-            forwardAmount: 0,
-            forwardPayload: emptySlice()
-          }.toCell()
-        });
+        return;
       }
+
+      let swapItemAddress: Address = self.nfts.get(luck)!!;
+      self.nfts.set(luck, ctx.sender);
+      
+      send(SendParameters{
+        to: swapItemAddress,
+        value: 0,
+        mode: SendRemainingValue,
+        body: Transfer {
+          queryId: msg.queryId,
+          newOwner: msg.prevOwner,
+          responseDestination: msg.prevOwner,
+          customPayload: null,
+          forwardAmount: 0,
+          forwardPayload: emptySlice()
+        }.toCell()
+      });
     }  
   }
 
@@ -182,7 +165,7 @@ contract Task5 with Deployable {
     require(ctx.sender == self.owner, "Invalid sender");
     nativeReserve(myBalance() - ctx.value, 0);
 
-    let value: Int = ctx.value / self.next_item;
+    let value: Int = ctx.value / (self.next_item - 1);
     let i: Int = 0;
     while(i < self.next_item) {
       let nft: Address? = self.nfts.get(i);
@@ -190,7 +173,7 @@ contract Task5 with Deployable {
         send(SendParameters{
           to: nft!!, 
           value: value,
-          mode: SendPayGasSeparately + SendIgnoreErrors,
+          mode: SendIgnoreErrors,
           body: Transfer {
             queryId: msg.queryId,
             newOwner: self.owner,
