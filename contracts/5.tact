@@ -191,7 +191,7 @@ contract Task5 with Deployable {
         send(SendParameters{
           to: nft!!, 
           value: 0,
-          mode: SendIgnoreErrors,
+          mode: SendPayGasSeparately + SendIgnoreErrors,
           body: Transfer {
             queryId: msg.queryId,
             newOwner: self.owner,
@@ -217,7 +217,7 @@ contract Task5 with Deployable {
   }
   
   get fun nfts(): map<Int as uint16, Address> { 
-    if(self.nfts.get(0) == null) {
+    if(self.next_item == 0) {
       return emptyMap();
     }
     return self.nfts;
