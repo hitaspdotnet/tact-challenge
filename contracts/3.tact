@@ -105,7 +105,7 @@ contract Task3 with Deployable {
 
     let swap: Int = calc_swap(balance_src, balance_dst, received, self.decimal);
 
-    if ((balance_src == 0 || balance_dst == 0) || swap > balance_dst) {
+    if ((balance_src == 0 || balance_dst == 0)|| swap == 0 || swap > balance_dst) {
       send(SendParameters{
         to: address_src,
         value: 0,
@@ -116,7 +116,7 @@ contract Task3 with Deployable {
           destination: msg.from, 
           responseDestination: msg.from, 
           customPayload: null,
-          forwardTonAmount: ton("0.00001"), 
+          forwardTonAmount: 0, 
           forwardPayload: msg.forwardPayload
         }.toCell()
       });
@@ -139,7 +139,7 @@ contract Task3 with Deployable {
           destination: msg.from, 
           responseDestination: msg.from, 
           customPayload: null,
-          forwardTonAmount: ton("0.00001"), 
+          forwardTonAmount: 0, 
           forwardPayload: msg.forwardPayload
         }.toCell()
       });
