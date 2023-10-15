@@ -173,7 +173,7 @@ contract Task5 with Deployable {
         send(SendParameters{
           to: nft!!, 
           value: value,
-          mode: SendIgnoreErrors,
+          mode: SendPayGasSeparately,
           body: Transfer {
             queryId: msg.queryId,
             newOwner: self.owner,
