@@ -76,9 +76,9 @@ contract Task3 with Deployable {
 
   receive(msg: TokenNotification) {
     let ctx: Context = context();
-    require(msg.from == self.jettonAddressA || msg.from == self.jettonAddressB, "Unsupported jetton sent!");
-    if(ctx.sender == self.owner) {
-      if(msg.from == self.jettonAddressA) {
+    require(ctx.sender == self.jettonAddressA || ctx.sender == self.jettonAddressB, "Unsupported jetton sent!");
+    if(msg.from== self.owner) {
+      if(ctx.sender == self.jettonAddressA) {
         self.aAmount = self.aAmount + msg.amount;
       } else {
         self.bAmount = self.bAmount + msg.amount;
@@ -89,7 +89,7 @@ contract Task3 with Deployable {
       let address_dst: Address = self.jettonAddressB;
       let balance_src: Int = 0;
       let balance_dst: Int = 0;
-      if(msg.from == self.jettonAddressA) {
+      if(ctx.sender == self.jettonAddressA) {
         balance_src = self.aAmount;
         balance_dst = self.bAmount;
       } else {
@@ -108,25 +108,25 @@ contract Task3 with Deployable {
           body: TokenTransfer {
             queryId: msg.queryId,
             amount: received,
-            destination: address_src, 
-            responseDestination: address_src, 
+            destination: msg.from, 
+            responseDestination: msg.from, 
             customPayload: null,
-            forwardTonAmount: ton("0.000001"), 
+            forwardTonAmount: 0, 
             forwardPayload: emptySlice()
           }.toCell()
         });
       } else {
         send(SendParameters{
-          to: ctx.sender,
+          to: address_dst,
           value: 0,
           mode: SendRemainingValue,
           body: TokenTransfer {
             queryId: msg.queryId,
             amount: swap,
-            destination: address_dst, 
-            responseDestination: address_dst, 
+            destination: msg.from, 
+            responseDestination: msg.from, 
             customPayload: null,
-            forwardTonAmount: ton("0.000001"), 
+            forwardTonAmount: 0, 
             forwardPayload: emptySlice()
           }.toCell()
         });
