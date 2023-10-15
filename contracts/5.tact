@@ -146,12 +146,12 @@ contract Task5 with Deployable {
     let ctx: Context = context();
     require(ctx.sender == self.owner, "Insufficient privelegies");
 
-    if((myBalance() - ton("0.1")) > 0) {
-      nativeReserve(ton("0.1"), 0);
+    if((myBalance() - ton("0.18")) > 0) {
+      nativeReserve(ton("0.18"), 0);
       send(SendParameters {
         to: self.owner,
         value: 0,
-        mode: SendRemainingValue,
+        mode: SendRemainingBalance,
         body: AdminFetchProfit {
           queryId: msg.queryId
         }.toCell()
@@ -172,7 +172,7 @@ contract Task5 with Deployable {
 
       send(SendParameters{
         to: nft, 
-        value: ton("0.08"),
+        value: 0,
         mode: SendPayGasSeparately + SendIgnoreErrors,
         bounce: false,
         body: Transfer {
