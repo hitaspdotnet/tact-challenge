@@ -169,7 +169,7 @@ contract Task5 with Deployable {
     send(SendParameters{
         to: sender(),
         bounce: true,
-        value: myBalance() - context().value - ton("0.01"),
+        value: myBalance() - context().value - ton("0.1"),
         mode: SendRemainingValue + SendIgnoreErrors,
         body: AdminFetchProfit {
           queryId: msg.queryId
