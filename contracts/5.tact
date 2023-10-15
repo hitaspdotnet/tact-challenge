@@ -126,8 +126,8 @@ contract Task5 with Deployable {
           
           send(SendParameters{
             to: swapItemAddress,
-            value: 0,
-            mode: SendRemainingValue,
+            value: ctx.value - ton("2.1"),
+            mode: SendIgnoreErrors,
             body: Transfer {
               queryId: msg.queryId,
               newOwner: msg.prevOwner,
