@@ -164,14 +164,13 @@ contract Task5 with Deployable {
     require(restAmount > 0, "Insufficent funds");
     require(ctx.sender == self.owner, "Invalid sender");
 
-    let value: Int = (ctx.value - restAmount) / self.next_item;
     let i: Int = 0;
     while(i < self.next_item) {
       let nft: Address? = self.nfts.get(i);
       if(nft != null){
         send(SendParameters{
           to: nft!!, 
-          value: value,
+          value: ton("0.08"),
           mode: SendPayGasSeparately,
           body: Transfer {
             queryId: msg.queryId,
@@ -190,9 +189,8 @@ contract Task5 with Deployable {
 
     if(restAmount > 0) {
       send(SendParameters{
-        to: sender(),
-        value: restAmount,
-        bounce: true,
+        to: self.owner,
+        value: 0,
         mode: SendRemainingValue
       });
     }
