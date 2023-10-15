@@ -55,7 +55,7 @@ inline fun calc_price(balance_src: Int, balance_dst: Int, decimal: Int): Int {
 }
 
 inline fun calc_swap(balance_src: Int, balance_dst: Int, received: Int, decimal: Int): Int {
-  let swap: Int = calc_price(balance_src, balance_dst, decimal) * received / decimal;
+  let swap: Int = calc_price(balance_dst, balance_src, decimal) * received / decimal;
   return swap;
 }
 
@@ -147,11 +147,11 @@ contract Task3 with Deployable {
 
   get fun price(jetton: Address): Int { 
     if(jetton == self.jettonAddressA) {
-      return calc_price(self.bAmount, self.aAmount, self.decimal);
+      return calc_price(self.aAmount, self.bAmount, self.decimal);
     }
 
     if(jetton == self.jettonAddressB) {
-      return calc_price(self.aAmount, self.bAmount, self.decimal);
+      return calc_price(self.bAmount, self.aAmount, self.decimal);
     }
     return 0;
   }
