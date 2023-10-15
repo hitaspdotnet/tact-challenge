@@ -49,13 +49,13 @@ message(0xf8a7ea5) TokenTransfer {
     forwardPayload: Slice as remaining;
 }
 
-inline fun calc_price(balance_src: Int, balance_dst: Int, decimal: Int): Int {
-  let price: Int = balance_dst * decimal / balance_src;
+inline fun calc_price(balance_src: Int, balance_des: Int, decimal: Int): Int {
+  let price: Int = balance_des * decimal / balance_src;
   return price;
 }
 
-inline fun calc_swap(balance_src: Int, balance_dst: Int, received: Int): Int {
-  let swap: Int = received / calc_price(balance_src, balance_dst, 1);
+inline fun calc_swap(balance_src: Int, balance_des: Int, received: Int): Int {
+  let swap: Int = received / calc_price(balance_src, balance_des, 1);
   return swap;
 }
 
@@ -92,20 +92,20 @@ contract Task3 with Deployable {
 
     let received: Int = msg.amount;
     let address_src: Address = self.jettonAddressA;
-    let address_dst: Address = self.jettonAddressB;
+    let address_des: Address = self.jettonAddressB;
     let balance_src: Int = self.aAmount;
-    let balance_dst: Int = self.bAmount;
+    let balance_des: Int = self.bAmount;
 
     if(ctx.sender == self.jettonAddressB) {
       address_src = self.jettonAddressB;
-      address_dst = self.jettonAddressA;
+      address_des = self.jettonAddressA;
       balance_src = self.bAmount;
-      balance_dst = self.aAmount;
+      balance_des = self.aAmount;
     }
 
-    let swap: Int = calc_swap(balance_src, balance_dst, received);
+    let swap: Int = calc_swap(balance_src, balance_des, received);
 
-    if ((balance_src == 0 || balance_dst == 0)|| swap == 0 || swap > balance_dst) {
+    if (balance_des - swap < 0) {
       send(SendParameters{
         to: address_src,
         value: 0,
@@ -130,7 +130,7 @@ contract Task3 with Deployable {
       }
 
       send(SendParameters{
-        to: address_dst,
+        to: address_des,
         value: 0,
         mode: SendRemainingValue,
         body: TokenTransfer {
