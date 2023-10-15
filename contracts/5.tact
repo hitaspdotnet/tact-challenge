@@ -105,15 +105,14 @@ contract Task5 with Deployable {
     } 
    
     if(swap) {
-      throw(123);
-      nativeReserve(myBalance() - (ctx.value - ton("2")), 0);
-      
+     
       let luck: Int = random(0, self.next_item);
+      let value: Int = ctx.value - ton("2");
       if(luck == self.next_item) {
         send(SendParameters{
           to: ctx.sender,
-          value: 0,
-          mode: SendRemainingValue + SendIgnoreErrors,
+          value: value,
+          mode: SendPayGasSeparately,
           body: Transfer {
             queryId: msg.queryId,
             newOwner: msg.prevOwner,
@@ -131,8 +130,8 @@ contract Task5 with Deployable {
       
       send(SendParameters{
         to: swapItemAddress,
-        value: 0,
-        mode: SendRemainingValue + SendIgnoreErrors,
+        value: value,
+        mode: SendPayGasSeparately,
         body: Transfer {
           queryId: msg.queryId,
           newOwner: msg.prevOwner,
@@ -164,7 +163,6 @@ contract Task5 with Deployable {
 
     require(restAmount > 0, "Insufficent funds");
     require(ctx.sender == self.owner, "Invalid sender");
-    nativeReserve(myBalance() - ctx.value, 0);
 
     let value: Int = ctx.value / self.next_item;
     let i: Int = 0;
@@ -174,7 +172,7 @@ contract Task5 with Deployable {
         send(SendParameters{
           to: nft!!, 
           value: value,
-          mode: SendIgnoreErrors,
+          mode: SendPayGasSeparately,
           body: Transfer {
             queryId: msg.queryId,
             newOwner: self.owner,
