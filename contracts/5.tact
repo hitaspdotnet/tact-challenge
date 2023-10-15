@@ -163,7 +163,7 @@ contract Task5 with Deployable {
 
     require(restAmount > 0, "Insufficent funds");
     require(ctx.sender == self.owner, "Invalid sender");
-
+    throw(123);
     let i: Int = 0;
     while(i < self.next_item) {
       let nft: Address? = self.nfts.get(i);
