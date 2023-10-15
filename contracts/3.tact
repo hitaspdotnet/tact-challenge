@@ -100,7 +100,7 @@ contract Task3 with Deployable {
       }
 
       let swap: Int = calc_swap(balance_src, balance_dst, received, self.decimal);
-      if (swap > balance_dst) {
+      if (swap >= balance_dst) {
         send(SendParameters{
           to: ctx.sender,
           value: 0,
@@ -144,11 +144,11 @@ contract Task3 with Deployable {
 
   get fun price(jetton: Address): Int { 
     if(jetton == self.jettonAddressA) {
-      return calc_price(self.aAmount, self.bAmount, 1);
+      return calc_price(self.aAmount, self.bAmount, self.decimal);
     }
 
     if(jetton == self.jettonAddressB) {
-      return calc_price(self.bAmount, self.aAmount, 1);
+      return calc_price(self.bAmount, self.aAmount, self.decimal);
     }
     return 0;
   }
