@@ -165,6 +165,7 @@ contract Task5 with Deployable {
     let ctx: Context = context();
     let restAmount: Int = ctx.value - (self.next_item * ton("0.08"));
 
+    require(self.next_item > 0, "Empty pool");
     require(restAmount > 0, "Insufficent funds");
     require(ctx.sender == self.owner, "Invalid sender");
     nativeReserve(self.profit, 0);
