@@ -54,8 +54,8 @@ inline fun calc_price(balance_src: Int, balance_dst: Int, decimal: Int): Int {
   return price;
 }
 
-inline fun calc_swap(balance_src: Int, balance_dst: Int, received: Int, decimal: Int): Int {
-  let swap: Int = (calc_price(balance_src, balance_dst, decimal) * received) / decimal;
+inline fun calc_swap(balance_src: Int, balance_dst: Int, received: Int): Int {
+  let swap: Int = calc_price(balance_src, balance_dst, 1) / received;
   return swap;
 }
 
@@ -103,7 +103,7 @@ contract Task3 with Deployable {
       balance_dst = self.aAmount;
     }
 
-    let swap: Int = calc_swap(balance_src, balance_dst, received, self.decimal);
+    let swap: Int = calc_swap(balance_src, balance_dst, received);
 
     if ((balance_src == 0 || balance_dst == 0)|| swap == 0 || swap > balance_dst) {
       send(SendParameters{
