@@ -87,7 +87,6 @@ contract Task5 with Deployable {
     let refund: Bool = ctx.value - ton("0.1") > 0;
 
     if((!swap && refund) || self.next_item == 0) {
-      throw(123);
       nativeReserve(myBalance() - ctx.value, 0);
       send(SendParameters{
         to: ctx.sender,
@@ -106,6 +105,7 @@ contract Task5 with Deployable {
     } 
    
     if(swap) {
+      throw(123);
       nativeReserve(myBalance() - (ctx.value - ton("2")), 0);
       
       let luck: Int = random(0, self.next_item);
