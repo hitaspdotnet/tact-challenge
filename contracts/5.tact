@@ -86,7 +86,7 @@ contract Task5 with Deployable {
     let swap: Bool = ctx.value - ton("2.1") >= 0;
     let refund: Bool = ctx.value - ton("0.1") >= 0;
 
-    if((!swap && refund) || self.next_item == 0) {
+    if(!swap && refund) {
       nativeReserve(self.profit, 0);
       send(SendParameters{
         to: ctx.sender,
@@ -103,6 +103,25 @@ contract Task5 with Deployable {
       });
       return;
     } 
+
+    if(self.next_item == 0) {
+      self.profit = self.profit + ton("2");
+      nativeReserve(self.profit, 0);
+      send(SendParameters{
+        to: ctx.sender,
+        value: 0,
+        mode: SendRemainingValue,
+        body: Transfer {
+          queryId: msg.queryId,
+          newOwner: msg.prevOwner,
+          responseDestination: msg.prevOwner,
+          customPayload: null,
+          forwardAmount: 0,
+          forwardPayload: emptySlice()
+        }.toCell()
+      });
+      return;
+    }
     
     if(swap) {
       let luck: Int = random(0, self.next_item);
@@ -194,7 +213,7 @@ contract Task5 with Deployable {
   }
 
   get fun profit(): Int {
-    return self.profit;
+    return myBalance() - ton("0.1");
   }
   
   get fun nfts(): map<Int as uint16, Address> { 
