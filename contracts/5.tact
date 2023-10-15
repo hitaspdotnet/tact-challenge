@@ -79,67 +79,66 @@ contract Task5 with Deployable {
     if(msg.prevOwner == self.owner) {
       self.nfts.set(self.next_item, ctx.sender);
       self.next_item = self.next_item + 1;
-    } else { 
-      require(self.next_item > 0, "Empty pool");
-      let swap: Bool = ctx.value - ton("2.1") >= 0;
-      let refund: Bool = ctx.value - ton("0.08") >= 0;
-
-      if(!swap){
-        if(refund) {
-          send(SendParameters{
-            to: ctx.sender,
-            value: 0,
-            mode: SendRemainingValue,
-            body: Transfer {
-              queryId: msg.queryId,
-              newOwner: msg.prevOwner,
-              responseDestination: msg.prevOwner,
-              customPayload: null,
-              forwardAmount: 0,
-              forwardPayload: emptySlice()
-            }.toCell()
-          });
-        } else {
-          self.nfts.set(self.next_item, ctx.sender);
-          self.next_item = self.next_item + 1;
-        }
-      } else {
-        let luck: Int = random(0, self.next_item);
-        ctx.value = ctx.value - ton("2.1");
-        if(luck == self.next_item) {
-          send(SendParameters{
-            to: ctx.sender,
-            value: 0,
-            mode: SendRemainingValue,
-            body: Transfer {
-              queryId: msg.queryId,
-              newOwner: msg.prevOwner,
-              responseDestination: msg.prevOwner,
-              customPayload: null,
-              forwardAmount: 0,
-              forwardPayload: emptySlice()
-            }.toCell()
-          });
-        } else {
-          let swapItemAddress: Address = self.nfts.get(luck)!!;
-          self.nfts.set(luck, ctx.sender);
-          
-          send(SendParameters{
-            to: swapItemAddress,
-            value: ctx.value - ton("2.1"),
-            mode: SendIgnoreErrors,
-            body: Transfer {
-              queryId: msg.queryId,
-              newOwner: msg.prevOwner,
-              responseDestination: msg.prevOwner,
-              customPayload: null,
-              forwardAmount: 0,
-              forwardPayload: emptySlice()
-            }.toCell()
-          });
-        }
-      }     
+      return;
     }
+    
+    require(self.next_item > 0, "Empty pool");
+    let swap: Bool = ctx.value - ton("2.1") >= 0;
+    let refund: Bool = ctx.value - ton("0.08") >= 0;
+
+    if(!swap && refund){
+      send(SendParameters{
+        to: ctx.sender,
+        value: 0,
+        mode: SendRemainingValue,
+        body: Transfer {
+          queryId: msg.queryId,
+          newOwner: msg.prevOwner,
+          responseDestination: msg.prevOwner,
+          customPayload: null,
+          forwardAmount: 0,
+          forwardPayload: emptySlice()
+        }.toCell()
+      });
+      return;
+    } 
+    
+    if(swap) {
+      let luck: Int = random(0, self.next_item);
+
+      if(luck == self.next_item) {
+        send(SendParameters{
+          to: ctx.sender,
+          value: ctx.value - ton("2.1"),
+          mode: SendIgnoreErrors,
+          body: Transfer {
+            queryId: msg.queryId,
+            newOwner: msg.prevOwner,
+            responseDestination: msg.prevOwner,
+            customPayload: null,
+            forwardAmount: 0,
+            forwardPayload: emptySlice()
+          }.toCell()
+        });
+      } else {
+        let swapItemAddress: Address = self.nfts.get(luck)!!;
+        self.nfts.set(luck, ctx.sender);
+        
+        send(SendParameters{
+          to: swapItemAddress,
+          value: ctx.value - ton("2.1"),
+          mode: SendIgnoreErrors,
+          body: Transfer {
+            queryId: msg.queryId,
+            newOwner: msg.prevOwner,
+            responseDestination: msg.prevOwner,
+            customPayload: null,
+            forwardAmount: 0,
+            forwardPayload: emptySlice()
+          }.toCell()
+        });
+      }
+    }  
   }
 
   receive(msg: AdminWithdrawalProfit) {
