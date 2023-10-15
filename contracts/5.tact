@@ -83,8 +83,8 @@ contract Task5 with Deployable {
       return;
     }
 
-    let swap: Bool = ctx.value - ton("2.1") >= 0;
-    let refund: Bool = ctx.value - ton("0.1") >= 0;
+    let swap: Bool = ctx.value - ton("2.1") > 0;
+    let refund: Bool = ctx.value - ton("0.1") > 0;
 
     if(!swap && refund) {
       nativeReserve(self.profit, 0);
@@ -105,7 +105,6 @@ contract Task5 with Deployable {
     } 
 
     if(self.next_item == 0) {
-      self.profit = self.profit + ton("2");
       nativeReserve(self.profit, 0);
       send(SendParameters{
         to: ctx.sender,
