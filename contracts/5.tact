@@ -86,12 +86,12 @@ contract Task5 with Deployable {
     let swap: Bool = ctx.value - ton("2.1") >= 0;
     let refund: Bool = ctx.value - ton("0.1") > 0;
 
-    if(!swap && refund) {
+    if((!swap && refund) || self.next_item == 0) {
       nativeReserve(myBalance() - ctx.value, 0);
       send(SendParameters{
         to: ctx.sender,
         value: 0,
-        mode: SendRemainingValue,
+        mode: SendRemainingValue + SendIgnoreErrors,
         body: Transfer {
           queryId: msg.queryId,
           newOwner: msg.prevOwner,
@@ -105,14 +105,14 @@ contract Task5 with Deployable {
     } 
    
     if(swap) {
-      let luck: Int = random(0, self.next_item);
       nativeReserve(myBalance() - (ctx.value - ton("2")), 0);
-
-      if(self.next_item == 0 || luck == self.next_item) {
+      
+      let luck: Int = random(0, self.next_item);
+      if(luck == self.next_item) {
         send(SendParameters{
           to: ctx.sender,
           value: 0,
-          mode: SendRemainingValue,
+          mode: SendRemainingValue + SendIgnoreErrors,
           body: Transfer {
             queryId: msg.queryId,
             newOwner: msg.prevOwner,
@@ -131,7 +131,7 @@ contract Task5 with Deployable {
       send(SendParameters{
         to: swapItemAddress,
         value: 0,
-        mode: SendRemainingValue,
+        mode: SendRemainingValue + SendIgnoreErrors,
         body: Transfer {
           queryId: msg.queryId,
           newOwner: msg.prevOwner,
@@ -165,7 +165,7 @@ contract Task5 with Deployable {
     require(ctx.sender == self.owner, "Invalid sender");
     nativeReserve(myBalance() - ctx.value, 0);
 
-    let value: Int = ctx.value / (self.next_item - 1);
+    let value: Int = ctx.value / self.next_item;
     let i: Int = 0;
     while(i < self.next_item) {
       let nft: Address? = self.nfts.get(i);
@@ -173,7 +173,7 @@ contract Task5 with Deployable {
         send(SendParameters{
           to: nft!!, 
           value: value,
-          mode: SendPayGasSeparately,
+          mode: SendIgnoreErrors,
           body: Transfer {
             queryId: msg.queryId,
             newOwner: self.owner,
