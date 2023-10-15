@@ -127,7 +127,7 @@ contract Task3 with Deployable {
         self.bAmount = self.bAmount + received;
         self.aAmount = self.aAmount - swap;
       }
-      
+
       send(SendParameters{
         to: address_dst,
         value: 0,
@@ -147,11 +147,11 @@ contract Task3 with Deployable {
 
   get fun price(jetton: Address): Int { 
     if(jetton == self.jettonAddressA) {
-      return calc_price(self.aAmount, self.bAmount, self.decimal);
+      return calc_price(self.bAmount, self.aAmount, self.decimal);
     }
 
     if(jetton == self.jettonAddressB) {
-      return calc_price(self.bAmount, self.aAmount, self.decimal);
+      return calc_price(self.aAmount, self.bAmount, self.decimal);
     }
     return 0;
   }
