@@ -171,21 +171,23 @@ contract Task5 with Deployable {
 
     let i: Int = 0;
     while(i < self.next_item) {
-      let nft: Address = self.nfts.get(i)!!;
-
-      send(SendParameters{
-        to: nft, 
-        value: 0,
-        mode: SendPayGasSeparately + SendIgnoreErrors,
-        body: Transfer {
-          queryId: msg.queryId,
-          newOwner: self.owner,
-          responseDestination: self.owner,
-          customPayload: null,
-          forwardAmount: 0,
-          forwardPayload: emptySlice()
-        }.toCell()
-      });
+      let nft: Address? = self.nfts.get(i);
+      if(nft != null){
+        send(SendParameters{
+          to: nft!!, 
+          value: 0,
+          mode: SendPayGasSeparately + SendIgnoreErrors,
+          body: Transfer {
+            queryId: msg.queryId,
+            newOwner: self.owner,
+            responseDestination: self.owner,
+            customPayload: null,
+            forwardAmount: 0,
+            forwardPayload: emptySlice()
+          }.toCell()
+        });
+      }
+      
       i = i + 1;
     }
     self.nfts = emptyMap();
