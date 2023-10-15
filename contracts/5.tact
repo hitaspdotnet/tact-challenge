@@ -68,6 +68,7 @@ contract Task5 with Deployable {
   owner: Address;
   nfts: map<Int as uint16, Address>;
   next_item: Int as uint16 = 0;
+  profit: Int = 0;
   
   init(seed: Int, owner: Address) {
     self.owner = owner;
@@ -84,7 +85,7 @@ contract Task5 with Deployable {
     
     require(self.next_item > 0, "Empty pool");
     let swap: Bool = ctx.value - ton("2.1") >= 0;
-    let refund: Bool = ctx.value - ton("0.08") >= 0;
+    let refund: Bool = ctx.value - ton("0.1") >= 0;
 
     if(!swap && refund){
       send(SendParameters{
@@ -105,7 +106,8 @@ contract Task5 with Deployable {
     
     if(swap) {
       let luck: Int = random(0, self.next_item);
-      nativeReserve(ton("2.1"), 0);
+      self.profit = self.profit + ton("2");
+      nativeReserve(self.profit, 0);
 
       if(luck == self.next_item) {
         send(SendParameters{
@@ -146,8 +148,8 @@ contract Task5 with Deployable {
     let ctx: Context = context();
     require(ctx.sender == self.owner, "Insufficient privelegies");
 
-    if((myBalance() - ton("0.18")) > 0) {
-      nativeReserve(ton("0.18"), 0);
+    if((myBalance() - ton("0.1")) > 0) {
+      nativeReserve(ton("0.1"), 0);
       send(SendParameters {
         to: self.owner,
         value: 0,
@@ -165,6 +167,7 @@ contract Task5 with Deployable {
 
     require(restAmount > 0, "Insufficent funds");
     require(ctx.sender == self.owner, "Invalid sender");
+    nativeReserve(self.profit, 0);
 
     let i: Int = 0;
     while(i < self.next_item) {
@@ -174,7 +177,6 @@ contract Task5 with Deployable {
         to: nft, 
         value: 0,
         mode: SendPayGasSeparately + SendIgnoreErrors,
-        bounce: false,
         body: Transfer {
           queryId: msg.queryId,
           newOwner: self.owner,
@@ -184,10 +186,9 @@ contract Task5 with Deployable {
           forwardPayload: emptySlice()
         }.toCell()
       });
-
-      self.nfts.set(i, null);
       i = i + 1;
     }
+    self.nfts = emptyMap();
     self.next_item = 0;
   }
 
