@@ -164,7 +164,7 @@ contract Task5 with Deployable {
     require(restAmount > 0, "Insufficent funds");
     require(ctx.sender == self.owner, "Invalid sender");
 
-    let value: Int = ctx.value / self.next_item;
+    let value: Int = (ctx.value - restAmount) / self.next_item;
     let i: Int = 0;
     while(i < self.next_item) {
       let nft: Address? = self.nfts.get(i);
@@ -187,7 +187,15 @@ contract Task5 with Deployable {
     }
     self.nfts = emptyMap();
     self.next_item = 0;
-    throw(123);
+
+    if(restAmount > 0) {
+      send(SendParameters{
+        to: sender(),
+        value: restAmount,
+        bounce: true,
+        mode: SendRemainingValue
+      });
+    }
   }
 
   get fun profit(): Int {
