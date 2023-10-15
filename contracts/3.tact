@@ -79,7 +79,8 @@ contract Task3 with Deployable {
   receive(msg: TokenNotification) {
     let ctx: Context = context();
     require(ctx.sender == self.jettonAddressA || ctx.sender == self.jettonAddressB, "Unsupported jetton sent!");
-    require(ctx.value > ton("0.4"), "Insufficient value");
+    require(msg.amount > 0, "Insufficient value");
+    
     if(msg.from == self.owner) {
       if(ctx.sender == self.jettonAddressA) {
         self.aAmount = self.aAmount + msg.amount;
