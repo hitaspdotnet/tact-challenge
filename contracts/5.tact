@@ -151,7 +151,7 @@ contract Task5 with Deployable {
       send(SendParameters {
         to: self.owner,
         value: value,
-        mode: SendRemainingValue,
+        mode: SendIgnoreErrors,
         body: AdminFetchProfit {
           queryId: msg.queryId
         }.toCell()
@@ -172,7 +172,7 @@ contract Task5 with Deployable {
 
       send(SendParameters{
         to: nft, 
-        value: ton("0.08"),
+        value: 0,
         mode: SendIgnoreErrors,
         bounce: false,
         body: Transfer {
