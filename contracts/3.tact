@@ -50,12 +50,12 @@ message(0xf8a7ea5) TokenTransfer {
 }
 
 inline fun calc_price(jetton_src: Int, jetton_dst: Int, decimal: Int): Int {
-  let price: Int = (jetton_dst * decimal) / jetton_src;
+  let price: Int = jetton_dst * decimal / jetton_src;
   return price;
 }
 
 inline fun calc_swap(jetton_src: Int, jetton_dst: Int, received: Int, decimal: Int): Int {
-  let swap: Int = calc_price(jetton_src, jetton_dst, decimal) * received / decimal;
+  let swap: Int = (jetton_dst * decimal / jetton_src) * received / decimal;
   return swap;
 }
 
@@ -100,7 +100,7 @@ contract Task3 with Deployable {
       }
 
       let swap: Int = calc_swap(balance_src, balance_dst, received, self.decimal);
-      if (swap >= balance_dst) {
+      if (swap > balance_dst) {
         send(SendParameters{
           to: ctx.sender,
           value: 0,
