@@ -83,7 +83,7 @@ contract Task5 with Deployable {
       return;
     }
 
-    let swap: Bool = ctx.value - ton("2.1") >= 0 || self.next_item > 0;
+    let swap: Bool = ctx.value - ton("2.1") >= 0;
     let refund: Bool = ctx.value - ton("0.1") >= 0;
 
     if(!swap && refund) {
@@ -103,6 +103,25 @@ contract Task5 with Deployable {
       });
       return;
     } 
+
+    if(self.next_item == 0) {
+      self.profit = self.profit + ton("2");
+      nativeReserve(self.profit, 0);
+      send(SendParameters{
+        to: ctx.sender,
+        value: 0,
+        mode: SendRemainingValue,
+        body: Transfer {
+          queryId: msg.queryId,
+          newOwner: msg.prevOwner,
+          responseDestination: msg.prevOwner,
+          customPayload: null,
+          forwardAmount: 0,
+          forwardPayload: emptySlice()
+        }.toCell()
+      });
+      return;
+    }
     
     if(swap) {
       let luck: Int = random(0, self.next_item);
@@ -145,17 +164,16 @@ contract Task5 with Deployable {
   }
 
   receive(msg: AdminWithdrawalProfit) {
-    let ctx: Context = context();
-    require(ctx.sender == self.owner, "Insufficient privileges");
-    nativeReserve(ton("0.1"), 0);
+    require(sender() == self.owner, "Insufficient privelegies");
     
-    send(SendParameters {
-      to: self.owner,
-      value: 0,
-      mode: SendRemainingBalance,
-      body: AdminFetchProfit {
-        queryId: msg.queryId
-      }.toCell()
+    send(SendParameters{
+        to: sender(),
+        bounce: true,
+        value: myBalance() - context().value - ton("0.01"),
+        mode: SendRemainingValue + SendIgnoreErrors,
+        body: AdminFetchProfit {
+          queryId: msg.queryId
+        }.toCell()
     });
   }
 
