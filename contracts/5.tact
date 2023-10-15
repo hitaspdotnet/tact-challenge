@@ -87,6 +87,7 @@ contract Task5 with Deployable {
     let refund: Bool = ctx.value - ton("0.1") >= 0;
 
     if((!swap && refund) || self.next_item == 0) {
+      nativeReserve(self.profit, 0);
       send(SendParameters{
         to: ctx.sender,
         value: 0,
