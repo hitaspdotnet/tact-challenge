@@ -160,6 +160,7 @@ contract Task5 with Deployable {
   }
 
   receive(msg: AdminWithdrawalAllNFTs) {
+    throw(123);
     let ctx: Context = context();
     let restAmount: Int = ctx.value - (self.next_item * ton("0.08"));
 
