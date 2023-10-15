@@ -55,7 +55,7 @@ inline fun calc_price(balance_src: Int, balance_dst: Int, decimal: Int): Int {
 }
 
 inline fun calc_swap(balance_src: Int, balance_dst: Int, received: Int, decimal: Int): Int {
-  let swap: Int = calc_price(balance_src, balance_dst, decimal) * received / decimal;
+  let swap: Int = (calc_price(balance_src, balance_dst, decimal) * received) / decimal;
   return swap;
 }
 
@@ -80,7 +80,7 @@ contract Task3 with Deployable {
     let ctx: Context = context();
     require(ctx.sender == self.jettonAddressA || ctx.sender == self.jettonAddressB, "Unsupported jetton sent!");
     require(msg.amount > 0, "Insufficient value");
-    
+
     if(msg.from == self.owner) {
       if(ctx.sender == self.jettonAddressA) {
         self.aAmount = self.aAmount + msg.amount;
