@@ -53,16 +53,19 @@ inline fun calc_swap(jetton_src: Int, jetton_dst: Int, received: Int, decimal: I
 
 contract Task3 with Deployable {
   owner: Address;
-  aAmount: Int = 0;
-  bAmount: Int = 0;
+  aAmount: Int;
+  bAmount: Int;
   jettonAddressA: Address;
   jettonAddressB: Address;
-  decimal: Int = 1000000000;
+  decimal: Int;
 
   init(admin: Address, newJettonAddressA: Address, newJettonAddressB: Address) {
     self.owner = admin;
     self.jettonAddressA = newJettonAddressA;
     self.jettonAddressB = newJettonAddressB;
+    self.aAmount = 0;
+    self.bAmount = 0;
+    self.decimal = 1000000000;
   }
 
   receive(msg: JettonNotification) {
@@ -141,6 +144,7 @@ contract Task3 with Deployable {
     if(jetton == self.jettonAddressB) {
       return calc_price(self.bAmount, self.aAmount, self.decimal);
     }
+    return 0;
   }
   
   get fun balance(jetton: Address): Int { 
@@ -151,5 +155,6 @@ contract Task3 with Deployable {
     if(jetton == self.jettonAddressB) {
       return self.bAmount;
     }
+    return 0;
   }
 }
