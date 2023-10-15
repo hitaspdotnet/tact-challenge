@@ -82,13 +82,11 @@ contract Task5 with Deployable {
       self.next_item = self.next_item + 1;
       return;
     }
-    
-    require(self.next_item > 0, "Empty pool");
+
     let swap: Bool = ctx.value - ton("2.1") >= 0;
     let refund: Bool = ctx.value - ton("0.1") >= 0;
 
-    if(!swap && refund){
-      throw(123);
+    if((!swap && refund) || self.next_item == 0) {
       send(SendParameters{
         to: ctx.sender,
         value: 0,
