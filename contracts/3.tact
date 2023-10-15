@@ -79,6 +79,7 @@ contract Task3 with Deployable {
   receive(msg: TokenNotification) {
     let ctx: Context = context();
     require(ctx.sender == self.jettonAddressA || ctx.sender == self.jettonAddressB, "Unsupported jetton sent!");
+    
     if(msg.from == self.owner) {
       if(ctx.sender == self.jettonAddressA) {
         self.aAmount = self.aAmount + msg.amount;
@@ -86,6 +87,7 @@ contract Task3 with Deployable {
         self.bAmount = self.bAmount + msg.amount;
       }
     } else {
+      
       let received: Int = msg.amount;
       let address_src: Address = self.jettonAddressA;
       let address_dst: Address = self.jettonAddressB;
@@ -101,11 +103,11 @@ contract Task3 with Deployable {
 
       let swap: Int = calc_swap(balance_src, balance_dst, received, self.decimal);
 
-      if (swap > balance_dst) {
+      if ((balance_src == 0 || balance_dst == 0) || swap > balance_dst) {
         send(SendParameters{
           to: ctx.sender,
           value: 0,
-          mode: SendIgnoreErrors,
+          mode: SendPayGasSeparately,
           body: TokenTransfer {
             queryId: msg.queryId,
             amount: received,
@@ -121,7 +123,7 @@ contract Task3 with Deployable {
           send(SendParameters{
             to: self.jettonAddressB,
             value: 0,
-            mode: SendIgnoreErrors,
+            mode: SendRemainingValue + SendIgnoreErrors,
             body: TokenTransfer {
               queryId: msg.queryId,
               amount: swap,
@@ -138,7 +140,7 @@ contract Task3 with Deployable {
           send(SendParameters{
             to: self.jettonAddressA,
             value: 0,
-            mode: SendIgnoreErrors,
+            mode: SendRemainingValue + SendIgnoreErrors,
             body: TokenTransfer {
               queryId: msg.queryId,
               amount: swap,
@@ -169,11 +171,11 @@ contract Task3 with Deployable {
   
   get fun balance(jetton: Address): Int { 
     if(jetton == self.jettonAddressA) {
-      return self.aAmount * self.decimal;
+      return self.aAmount;
     }
     
     if(jetton == self.jettonAddressB) {
-      return self.bAmount * self.decimal;
+      return self.bAmount;
     }
     return 0;
   }
