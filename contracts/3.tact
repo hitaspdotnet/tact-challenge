@@ -55,7 +55,7 @@ inline fun calc_price(balance_src: Int, balance_dst: Int, decimal: Int): Int {
 }
 
 inline fun calc_swap(balance_src: Int, balance_dst: Int, received: Int): Int {
-  let swap: Int = calc_price(balance_src, balance_dst, 1) / received;
+  let swap: Int = received / calc_price(balance_src, balance_dst, 1);
   return swap;
 }
 
