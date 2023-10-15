@@ -183,8 +183,8 @@ contract Task5 with Deployable {
     nativeReserve(myBalance() - ctx.value, 0);
 
     let value: Int = ctx.value / self.next_item;
-    let i: Int = self.next_item - 1;
-    while(i >= 0) {
+    let i: Int = 0;
+    while(i < self.next_item) {
       let nft: Address? = self.nfts.get(i);
       if(nft != null){
         send(SendParameters{
@@ -201,7 +201,7 @@ contract Task5 with Deployable {
           }.toCell()
         });
       }
-      i = i - 1;
+      i = i + 1;
     }
     self.nfts = emptyMap();
     self.next_item = 0;
