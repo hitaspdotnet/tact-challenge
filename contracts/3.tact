@@ -43,6 +43,14 @@ message(0xf8a7ea5) JettonTransfer {
     forwardPayload: Slice as remaining;
 }
 
+inline fun calc_price(jetton_src: Int, jetton_dst: Int, decimal: Int): Int {
+  return (jetton_src * decimal) / jetton_dst;
+}
+
+inline fun calc_swap(jetton_src: Int, jetton_dst: Int, received: Int, decimal: Int): Int {
+  return received / calc_price(jetton_src, jetton_dst, decimal);
+}
+
 contract Task3 with Deployable {
   owner: Address;
   aAmount: Int = 0;
@@ -55,35 +63,6 @@ contract Task3 with Deployable {
     self.owner = admin;
     self.jettonAddressA = newJettonAddressA;
     self.jettonAddressB = newJettonAddressB;
-  }
-
-  fun calc_price(jetton_src: Int, jetton_dst: Int): Int {
-    let jetton_price: Int = (jetton_src * self.decimal) / jetton_dst;
-    return jetton_price;
-  }
-
-  fun calc_swap(jetton_src: Int, jetton_dst: Int, received: Int): Int {
-    let swap: Int = received / self.calc_price(jetton_src, jetton_dst);
-    return swap;
-  }
-
-  fun transferTo(jetton_wallet: Address, destination: Address, amount: Int, query_id: Int) {
-    if (amount > 0) {
-      send(SendParameters{
-        to: jetton_wallet,
-        value: 0,
-        mode: SendRemainingValue,
-        body: JettonTransfer {
-          queryId: query_id,
-          amount: amount,
-          destination: destination, 
-          responseDestination: destination, 
-          customPayload: null,
-          forwardTonAmount: ton("0.000001"), 
-          forwardPayload: emptySlice()
-        }.toCell()
-      });
-    }
   }
 
   receive(msg: JettonNotification) {
@@ -111,11 +90,37 @@ contract Task3 with Deployable {
         balance_dst = self.aAmount;
       }
 
-      let swap: Int = self.calc_swap(balance_src, balance_dst, received);
+      let swap: Int = calc_swap(balance_src, balance_dst, received, self.decimal);
       if (swap >= balance_dst) {
-        self.transferTo(ctx.sender, address_src, received, msg.queryId);
+        send(SendParameters{
+          to: ctx.sender,
+          value: 0,
+          mode: SendRemainingValue,
+          body: JettonTransfer {
+            queryId: msg.queryId,
+            amount: received,
+            destination: address_src, 
+            responseDestination: address_src, 
+            customPayload: null,
+            forwardTonAmount: ton("0.000001"), 
+            forwardPayload: emptySlice()
+          }.toCell()
+        });
       } else {
-        self.transferTo(ctx.sender, address_dst, swap, msg.queryId);
+        send(SendParameters{
+          to: ctx.sender,
+          value: 0,
+          mode: SendRemainingValue,
+          body: JettonTransfer {
+            queryId: msg.queryId,
+            amount: swap,
+            destination: address_dst, 
+            responseDestination: address_dst, 
+            customPayload: null,
+            forwardTonAmount: ton("0.000001"), 
+            forwardPayload: emptySlice()
+          }.toCell()
+        });
 
         if(address_src == self.jettonAddressA) {
           self.aAmount = self.aAmount + received;
@@ -130,11 +135,11 @@ contract Task3 with Deployable {
 
   get fun price(jetton: Address): Int { 
     if(jetton == self.jettonAddressA) {
-      return self.calc_price(self.aAmount, self.bAmount);
+      return calc_price(self.aAmount, self.bAmount, self.decimal);
     }
 
     if(jetton == self.jettonAddressB) {
-      return self.calc_price(self.bAmount, self.aAmount);
+      return calc_price(self.bAmount, self.aAmount, self.decimal);
     }
   }
   
