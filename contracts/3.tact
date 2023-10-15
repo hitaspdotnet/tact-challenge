@@ -48,7 +48,7 @@ inline fun calc_price(jetton_src: Int, jetton_dst: Int, decimal: Int): Int {
 }
 
 inline fun calc_swap(jetton_src: Int, jetton_dst: Int, received: Int, decimal: Int): Int {
-  return received / calc_price(jetton_src, jetton_dst, decimal);
+  return received / calc_price(jetton_src, jetton_dst, 1);
 }
 
 contract Task3 with Deployable {
@@ -59,10 +59,10 @@ contract Task3 with Deployable {
   jettonAddressB: Address;
   decimal: Int;
 
-  init(admin: Address, newJettonAddressA: Address, newJettonAddressB: Address) {
+  init(admin: Address, newJAddressA: Address, newJAddressB: Address) {
     self.owner = admin;
-    self.jettonAddressA = newJettonAddressA;
-    self.jettonAddressB = newJettonAddressB;
+    self.jettonAddressA = newJAddressA;
+    self.jettonAddressB = newJAddressB;
     self.aAmount = 0;
     self.bAmount = 0;
     self.decimal = 1000000000;
