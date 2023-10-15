@@ -7,12 +7,18 @@ import "@stdlib/deploy";
   Therefore, the smart contract needs to keep track of how much jettons it has.
   
   Price for the jetton A in swap B->A should be calculated by formula "amountOfJettonAOnContract * decimal / amountOfJettonBOnContract".
+  Token prices must be decimalized for accuracy, so it is the prices that must be adjusted to decimal 1e9.
   Decimals are only needed for price accuracy. It should be set as 1e9.
   So, if smart contract has 10 of jetton A and 2 of jetton B, then after sending 1 jetton B you should receive 5 of jettons A.
 
-  If smart contract pool doesn't have enough jettons to trade
-  (for example someone sends 99999 jettons of B, but dex pool only has 10 of jettons A),
-  then sent incoming jettons (B, in our example) back to the sender.
+  Example formula for amountOfAJettonToSend in B->A swap will be
+  (amountOfJettonAOnContract * decimal / amountOfJettonBOnContract) * amountOfTokenBToSwap / decimal
+
+  If smart contract pool doesn't have enough jettons to trade,
+  then it should send incoming jettons back to the user. For a clearer explanation,
+  let's look at the example we described above (smart contract has 10 of jetton A and 2 of jetton B).
+  If user will send 3 jettons B, smart contract should reject the message (because contract does not have 3 * 5 = 15 jettons A)
+  and send 3 jettons B back to the user.
 
   If smart contract receives a different jetton (neither A nor B) then throw an error.
 
@@ -26,14 +32,14 @@ import "@stdlib/deploy";
   To be exact: any jettons (A or B) received from the admin are "added". Admin can't swap.
 */
 
-message(0x7362d09c) JettonNotification {
+message(0x7362d09c) TokenNotification {
     queryId: Int as uint64;
     amount: Int as coins;
     from: Address;
     forwardPayload: Slice as remaining;
 }
 
-message(0xf8a7ea5) JettonTransfer {
+message(0xf8a7ea5) TokenTransfer {
     queryId: Int as uint64;
     amount: Int as coins;
     destination: Address;
@@ -41,14 +47,6 @@ message(0xf8a7ea5) JettonTransfer {
     customPayload: Cell?;
     forwardTonAmount: Int as coins;
     forwardPayload: Slice as remaining;
-}
-
-inline fun calc_price(jetton_src: Int, jetton_dst: Int, decimal: Int): Int {
-  return (jetton_src * decimal) / jetton_dst;
-}
-
-inline fun calc_swap(jetton_src: Int, jetton_dst: Int, received: Int, decimal: Int): Int {
-  return received / calc_price(jetton_src, jetton_dst, 1);
 }
 
 contract Task3 with Deployable {
@@ -68,93 +66,14 @@ contract Task3 with Deployable {
     self.decimal = 1000000000;
   }
 
-  receive(msg: JettonNotification) {
-    let ctx: Context = context();
-    require(msg.from == self.jettonAddressA || msg.from == self.jettonAddressB, "Unsupported jetton sent!");
-    if(ctx.sender == self.owner) {
-      if(msg.from == self.jettonAddressA) {
-        self.aAmount = self.aAmount + msg.amount;
-      } else {
-        self.bAmount = self.bAmount + msg.amount;
-      }
-    } else {
-      let received: Int = msg.amount;
-      let address_src: Address = self.jettonAddressA;
-      let address_dst: Address = self.jettonAddressB;
-      let balance_src: Int = 0;
-      let balance_dst: Int = 0;
-      if(msg.from == self.jettonAddressA) {
-        balance_src = self.aAmount;
-        balance_dst = self.bAmount;
-      } else {
-        address_src = self.jettonAddressB;
-        address_dst = self.jettonAddressA;
-        balance_src = self.bAmount;
-        balance_dst = self.aAmount;
-      }
-
-      let swap: Int = calc_swap(balance_src, balance_dst, received, self.decimal);
-      if (swap >= balance_dst) {
-        send(SendParameters{
-          to: ctx.sender,
-          value: 0,
-          mode: SendRemainingValue,
-          body: JettonTransfer {
-            queryId: msg.queryId,
-            amount: received,
-            destination: address_src, 
-            responseDestination: address_src, 
-            customPayload: null,
-            forwardTonAmount: ton("0.000001"), 
-            forwardPayload: emptySlice()
-          }.toCell()
-        });
-      } else {
-        send(SendParameters{
-          to: ctx.sender,
-          value: 0,
-          mode: SendRemainingValue,
-          body: JettonTransfer {
-            queryId: msg.queryId,
-            amount: swap,
-            destination: address_dst, 
-            responseDestination: address_dst, 
-            customPayload: null,
-            forwardTonAmount: ton("0.000001"), 
-            forwardPayload: emptySlice()
-          }.toCell()
-        });
-
-        if(address_src == self.jettonAddressA) {
-          self.aAmount = self.aAmount + received;
-          self.bAmount = self.bAmount - swap;
-        } else {
-          self.bAmount = self.bAmount + received;
-          self.aAmount = self.aAmount - swap;
-        }
-      }
-    }
-  }
-
-  get fun price(token: Address): Int { 
-    if(token == self.jettonAddressA) {
-      return calc_price(self.aAmount, self.bAmount, self.decimal);
-    }
-
-    if(token == self.jettonAddressB) {
-      return calc_price(self.bAmount, self.aAmount, self.decimal);
-    }
+  receive(msg: TokenNotification) {
+  } 
+  
+  get fun price(jetton: Address): Int { 
     return 0;
   }
   
-  get fun balance(token: Address): Int { 
-    if(token == self.jettonAddressA) {
-      return self.aAmount;
-    }
-    
-    if(token == self.jettonAddressB) {
-      return self.bAmount;
-    }
+  get fun balance(jetton: Address): Int { 
     return 0;
   }
 }
