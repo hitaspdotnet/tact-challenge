@@ -45,19 +45,16 @@ message(0xf8a7ea5) JettonTransfer {
 
 contract Task3 with Deployable {
   owner: Address;
-  aAmount: Int;
-  bAmount: Int;
+  aAmount: Int = 0;
+  bAmount: Int = 0;
   jettonAddressA: Address;
   jettonAddressB: Address;
-  decimal: Int;
+  decimal: Int = 1000000000;
 
   init(admin: Address, newJettonAddressA: Address, newJettonAddressB: Address) {
     self.owner = admin;
     self.jettonAddressA = newJettonAddressA;
     self.jettonAddressB = newJettonAddressB;
-    self.aAmount = 0;
-    self.bAmount = 0;
-    self.decimal = 1000000000;
   }
 
   fun calc_price(jetton_src: Int, jetton_dst: Int): Int {
