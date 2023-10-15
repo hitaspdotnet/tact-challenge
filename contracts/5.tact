@@ -69,7 +69,6 @@ contract Task5 with Deployable {
   owner: Address;
   nfts: map<Int as uint16, Address>;
   next_item: Int as uint16 = 0;
-  profit: Int = 0;
   
   init(seed: Int, owner: Address) {
     self.owner = owner;
@@ -106,8 +105,7 @@ contract Task5 with Deployable {
     } 
 
     if(self.next_item == 0) {
-      self.profit = self.profit + ton("2");
-      nativeReserve(self.profit, 0);
+      nativeReserve(myBalance() + ton("2"), 0);
       send(SendParameters{
         to: ctx.sender,
         value: 0,
@@ -126,8 +124,7 @@ contract Task5 with Deployable {
     
     if(swap) {
       let luck: Int = random(0, self.next_item);
-      self.profit = self.profit + ton("2");
-      nativeReserve(self.profit, 0);
+      nativeReserve(myBalance() + ton("2"), 0);
 
       if(luck == self.next_item) {
         send(SendParameters{
@@ -183,15 +180,16 @@ contract Task5 with Deployable {
 
     require(restAmount > 0, "Insufficent funds");
     require(ctx.sender == self.owner, "Invalid sender");
-    nativeReserve(self.profit, 0);
+    nativeReserve(myBalance() - ctx.value, 0);
 
-    let i: Int = 0;
-    while(i < self.next_item) {
+    let value: Int = ctx.value / self.next_item;
+    let i: Int = self.next_item - 1;
+    while(i >= 0) {
       let nft: Address? = self.nfts.get(i);
       if(nft != null){
         send(SendParameters{
           to: nft!!, 
-          value: 0,
+          value: value,
           mode: SendPayGasSeparately + SendIgnoreErrors,
           body: Transfer {
             queryId: msg.queryId,
@@ -203,8 +201,7 @@ contract Task5 with Deployable {
           }.toCell()
         });
       }
-      
-      i = i + 1;
+      i = i - 1;
     }
     self.nfts = emptyMap();
     self.next_item = 0;
