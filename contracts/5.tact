@@ -87,6 +87,7 @@ contract Task5 with Deployable {
     let refund: Bool = ctx.value - ton("0.1") > 0;
 
     if((!swap && refund) || self.next_item == 0) {
+      throw(123);
       nativeReserve(myBalance() - ctx.value, 0);
       send(SendParameters{
         to: ctx.sender,
@@ -158,7 +159,6 @@ contract Task5 with Deployable {
   }
 
   receive(msg: AdminWithdrawalAllNFTs) {
-    throw(123);
     let ctx: Context = context();
     let restAmount: Int = ctx.value - (self.next_item * ton("0.08"));
 
