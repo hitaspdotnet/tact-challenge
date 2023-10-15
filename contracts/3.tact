@@ -50,11 +50,13 @@ message(0xf8a7ea5) TokenTransfer {
 }
 
 inline fun calc_price(jetton_src: Int, jetton_dst: Int, decimal: Int): Int {
-  return (jetton_src * decimal) / jetton_dst;
+  let price: Int = (jetton_dst * decimal) / jetton_src;
+  return price;
 }
 
 inline fun calc_swap(jetton_src: Int, jetton_dst: Int, received: Int, decimal: Int): Int {
-  return received / calc_price(jetton_src, jetton_dst, 1);
+  let swap: Int = calc_price(jetton_src, jetton_dst, decimal) * received / decimal;
+  return swap;
 }
 
 contract Task3 with Deployable {
@@ -77,7 +79,7 @@ contract Task3 with Deployable {
   receive(msg: TokenNotification) {
     let ctx: Context = context();
     require(ctx.sender == self.jettonAddressA || ctx.sender == self.jettonAddressB, "Unsupported jetton sent!");
-    if(msg.from== self.owner) {
+    if(msg.from == self.owner) {
       if(ctx.sender == self.jettonAddressA) {
         self.aAmount = self.aAmount + msg.amount;
       } else {
@@ -100,7 +102,7 @@ contract Task3 with Deployable {
       }
 
       let swap: Int = calc_swap(balance_src, balance_dst, received, self.decimal);
-      if (swap >= balance_dst) {
+      if (swap > balance_dst) {
         send(SendParameters{
           to: ctx.sender,
           value: 0,
