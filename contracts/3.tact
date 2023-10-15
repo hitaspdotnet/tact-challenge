@@ -89,12 +89,10 @@ contract Task3 with Deployable {
       let received: Int = msg.amount;
       let address_src: Address = self.jettonAddressA;
       let address_dst: Address = self.jettonAddressB;
-      let balance_src: Int = 0;
-      let balance_dst: Int = 0;
-      if(ctx.sender == self.jettonAddressA) {
-        balance_src = self.aAmount;
-        balance_dst = self.bAmount;
-      } else {
+      let balance_src: Int = self.aAmount;
+      let balance_dst: Int = self.bAmount;
+      
+      if(ctx.sender == self.jettonAddressB) {
         address_src = self.jettonAddressB;
         address_dst = self.jettonAddressA;
         balance_src = self.bAmount;
@@ -133,7 +131,7 @@ contract Task3 with Deployable {
           }.toCell()
         });
 
-        if(address_src == self.jettonAddressA) {
+        if(ctx.sender == self.jettonAddressA) {
           self.aAmount = self.aAmount + received;
           self.bAmount = self.bAmount - swap;
         } else {
