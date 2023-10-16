@@ -103,7 +103,7 @@ contract Task3 with Deployable {
 
     let swap: Int = calc_swap(balance_src, balance_des, received, self.decimal);
 
-    if (balance_des < swap || swap == 0) {
+    if (balance_des < swap || swap == 0 || balance_des == 0 || balance_src == 0) {
       send(SendParameters{
         to: address_src,
         value: 0,
@@ -148,7 +148,7 @@ contract Task3 with Deployable {
         send(SendParameters{
           to: address_src,
           value: 0,
-          mode: SendRemainingValue,
+          mode: SendPayGasSeparately,
           body: TokenTransfer {
             queryId: 0,
             amount: restAmount,
