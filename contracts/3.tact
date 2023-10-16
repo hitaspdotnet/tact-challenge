@@ -115,7 +115,7 @@ contract Task3 with Deployable {
           destination: msg.from, 
           responseDestination: myAddress(), 
           customPayload: null,
-          forwardTonAmount: ton("0.05"), 
+          forwardTonAmount: 0, 
           forwardPayload: msg.forwardPayload
         }.toCell()
       });
@@ -138,7 +138,7 @@ contract Task3 with Deployable {
           destination: msg.from, 
           responseDestination: myAddress(), 
           customPayload: null,
-          forwardTonAmount: ton("0.05"), 
+          forwardTonAmount: 0, 
           forwardPayload: msg.forwardPayload
         }.toCell()
       });
@@ -146,13 +146,16 @@ contract Task3 with Deployable {
   }
 
   get fun price(jetton: Address): Int { 
-    if(jetton == self.jettonAddressA) {
-      return calc_price(self.aAmount, self.bAmount, self.decimal);
+    if(self.aAmount > 0 && self.bAmount > 0){
+      if(jetton == self.jettonAddressA) {
+        return calc_price(self.aAmount, self.bAmount, self.decimal);
+      }
+
+      if(jetton == self.jettonAddressB) {
+        return calc_price(self.bAmount, self.aAmount, self.decimal);
+      }
     }
 
-    if(jetton == self.jettonAddressB) {
-      return calc_price(self.bAmount, self.aAmount, self.decimal);
-    }
     return 0;
   }
   
