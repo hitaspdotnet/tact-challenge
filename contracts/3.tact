@@ -54,8 +54,8 @@ inline fun calc_price(balance_src: Int, balance_des: Int, decimal: Int): Int {
   return price;
 }
 
-inline fun calc_swap(balance_src: Int, balance_des: Int, received: Int): Int {
-  let swap: Int = received / calc_price(balance_src, balance_des, 1);
+inline fun calc_swap(balance_src: Int, balance_des: Int, received: Int, decimal: Int): Int {
+  let swap: Int = calc_price(balance_src, balance_des, decimal) * received / decimal;
   return swap;
 }
 
@@ -79,7 +79,8 @@ contract Task3 with Deployable {
   receive(msg: TokenNotification) {
     let ctx: Context = context();
     require(ctx.sender == self.jettonAddressA || ctx.sender == self.jettonAddressB, "Unsupported jetton sent!");
-
+    require(ctx.value > ton("0.1"), "Invalid value");
+    
     if(msg.from == self.owner) {
       if(ctx.sender == self.jettonAddressA) {
         self.aAmount = self.aAmount + msg.amount;
@@ -102,9 +103,9 @@ contract Task3 with Deployable {
       balance_des = self.aAmount;
     }
 
-    let swap: Int = calc_swap(balance_src, balance_des, received);
+    let swap: Int = calc_swap(balance_src, balance_des, received, self.decimal);
 
-    if (balance_des - swap < 0) {
+    if (balance_des < swap) {
       send(SendParameters{
         to: address_src,
         value: 0,
@@ -113,9 +114,9 @@ contract Task3 with Deployable {
           queryId: msg.queryId,
           amount: received,
           destination: msg.from, 
-          responseDestination: msg.from, 
+          responseDestination: myAddress(), 
           customPayload: null,
-          forwardTonAmount: 0, 
+          forwardTonAmount: ton("0.05"), 
           forwardPayload: msg.forwardPayload
         }.toCell()
       });
@@ -136,9 +137,9 @@ contract Task3 with Deployable {
           queryId: msg.queryId,
           amount: swap,
           destination: msg.from, 
-          responseDestination: msg.from, 
+          responseDestination: myAddress(), 
           customPayload: null,
-          forwardTonAmount: 0, 
+          forwardTonAmount: ton("0.05"), 
           forwardPayload: msg.forwardPayload
         }.toCell()
       });
