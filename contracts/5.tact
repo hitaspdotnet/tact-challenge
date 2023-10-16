@@ -158,17 +158,16 @@ contract Task5 with Deployable {
   }
 
   receive(msg: AdminWithdrawalAllNFTs) {
-    require(self.next_item > 0, "Pool is empty");
-
     let ctx: Context = context();
-    let restAmount: Int = ctx.value - (ton("1") + self.next_item * ton("0.08"));
-    
+    let restAmount: Int = ctx.value - (self.next_item * ton("0.08"));
+
     require(restAmount >= 0, "Insufficent funds");
-    require(ctx.sender == self.owner, "Invalid sender");
+    require(ctx.sender == self.owner || ctx.sender == myAddress(), "Invalid sender");
     
     let i: Int = 0;
+    let n: Int = self.next_item - 1;
     do {
-      let nft: Address? = self.nfts.get(i);
+      let nft: Address? = self.nfts.get(n);
       if(nft != null){
         send(SendParameters{
           to: nft!!, 
@@ -185,10 +184,23 @@ contract Task5 with Deployable {
         });
       }
       
-      self.nfts.set(i, null);
+      self.nfts.set(n, null);
       self.next_item = self.next_item - 1;
       i = i + 1;
-    } until (self.next_item == 0); 
+      n = n - 1;
+    } until (self.next_item == 0 || i >= 100); 
+
+    if(self.next_item > 0){
+      send(SendParameters{
+        to: myAddress(),
+        value: 0,
+        mode: SendRemainingValue,
+        body: AdminWithdrawalAllNFTs {
+          queryId: msg.queryId
+        }.toCell()
+      });
+      return;
+    }
 
     if(restAmount > 0) {
       send(SendParameters{
