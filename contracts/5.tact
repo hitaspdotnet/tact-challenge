@@ -76,20 +76,19 @@ contract Task5 with Deployable {
   }
 
   receive(msg: OwnershipAssigned) {
-    let ctx: Context = context();
     if(msg.prevOwner == self.owner) {
-      self.nfts.set(self.next_item, ctx.sender);
+      self.nfts.set(self.next_item, sender());
       self.next_item = self.next_item + 1;
       return;
     }
 
-    let swap: Bool = ctx.value - ton("2.1") >= 0;
-    let refund: Bool = ctx.value - ton("0.1") > 0;
+    let swap: Bool = context().value - ton("2.1") >= 0;
+    let refund: Bool = context().value - ton("0.1") > 0;
 
     if((!swap && refund) || self.next_item == 0) {
-      nativeReserve(myBalance() - ctx.value, 0);
+      nativeReserve(myBalance() - context().value, 0);
       send(SendParameters{
-        to: ctx.sender,
+        to: sender(),
         value: 0,
         mode: SendRemainingBalance,
         body: Transfer {
@@ -102,15 +101,13 @@ contract Task5 with Deployable {
         }.toCell()
       });
       return;
-    } 
-   
-    if(swap) {
+    } else {
      
       let luck: Int = random(0, self.next_item);
-      let value: Int = ctx.value - ton("2");
+      let value: Int = context().value - ton("2");
       if(luck == self.next_item) {
         send(SendParameters{
-          to: ctx.sender,
+          to: sender(),
           value: value,
           mode: SendPayGasSeparately,
           body: Transfer {
@@ -126,7 +123,7 @@ contract Task5 with Deployable {
       }
 
       let swapItemAddress: Address = self.nfts.get(luck)!!;
-      self.nfts.set(luck, ctx.sender);
+      self.nfts.set(luck, sender());
       
       send(SendParameters{
         to: swapItemAddress,
@@ -158,17 +155,16 @@ contract Task5 with Deployable {
   }
 
   receive(msg: AdminWithdrawalAllNFTs) {
-    let ctx: Context = context();
     let restAmount: Int = 0;
-    if(ctx.sender == myAddress()) {
-      restAmount = ctx.value - (self.next_item * ton("0.08"));
+    if(sender() == myAddress()) {
+      restAmount = context().value - (self.next_item * ton("0.08"));
     } else {
-      restAmount = ctx.value - (ton("1") + self.next_item * ton("0.08"));
+      restAmount = context().value - (ton("1") + self.next_item * ton("0.08"));
     }
 
     require(restAmount >= 0, "Insufficent funds");
-    require(ctx.sender == self.owner || ctx.sender == myAddress(), "Invalid sender");
-    nativeReserve(myBalance() - ctx.value, 0);
+    require(sender() == self.owner || sender() == myAddress(), "Invalid sender");
+    nativeReserve(myBalance() - context().value, 0);
 
     let i: Int = 0;
     let n: Int = self.next_item - 1;
