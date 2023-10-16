@@ -89,9 +89,10 @@ contract Task4 with Deployable {
         body: "NFT is still locked".asComment()
       });
       return;
-    } 
+    }
 
     if(self.nft != null) {
+
       send(SendParameters{
         to: msg.nftAddress,
         value: 0,
@@ -109,7 +110,9 @@ contract Task4 with Deployable {
       self.owner = null;
       self.nft = null;
       self.lockUntil = 0;
-    }
+
+      return;
+    } 
   }
 
   get fun time(): Int {
