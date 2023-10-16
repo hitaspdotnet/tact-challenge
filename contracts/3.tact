@@ -76,11 +76,10 @@ contract Task3 with Deployable {
   }
 
   receive(msg: TokenNotification) {
-    let ctx: Context = context();
-    require(ctx.sender == self.jettonAddressA || ctx.sender == self.jettonAddressB, "Unsupported jetton sent!");
-    
+    require(sender() == self.jettonAddressA || sender() == self.jettonAddressB, "Unsupported jetton sent!");
+  
     if(msg.from == self.owner) {
-      if(ctx.sender == self.jettonAddressA) {
+      if(sender() == self.jettonAddressA) {
         self.aAmount = self.aAmount + msg.amount;
       } else {
         self.bAmount = self.bAmount + msg.amount;
@@ -94,7 +93,7 @@ contract Task3 with Deployable {
     let balance_src: Int = self.aAmount;
     let balance_des: Int = self.bAmount;
 
-    if(ctx.sender == self.jettonAddressB) {
+    if(sender() == self.jettonAddressB) {
       address_src = self.jettonAddressB;
       address_des = self.jettonAddressA;
       balance_src = self.bAmount;
@@ -107,7 +106,7 @@ contract Task3 with Deployable {
       send(SendParameters{
         to: address_src,
         value: 0,
-        mode: SendRemainingValue,
+        mode: SendPayGasSeparately,
         body: TokenTransfer {
           queryId: 0,
           amount: received,
@@ -129,21 +128,6 @@ contract Task3 with Deployable {
         self.aAmount = self.aAmount - swap;
       }
 
-      send(SendParameters{
-        to: address_des,
-        value: 0,
-        mode: SendPayGasSeparately,
-        body: TokenTransfer {
-          queryId: 0,
-          amount: swap,
-          destination: msg.from, 
-          responseDestination: myAddress(), 
-          customPayload: null,
-          forwardTonAmount: ton("0.01"), 
-          forwardPayload: emptySlice()
-        }.toCell()
-      });
-
       if(restAmount > 0) {
         send(SendParameters{
           to: address_src,
@@ -160,6 +144,21 @@ contract Task3 with Deployable {
           }.toCell()
         });
       }
+
+      send(SendParameters{
+        to: address_des,
+        value: 0,
+        mode: SendPayGasSeparately,
+        body: TokenTransfer {
+          queryId: 0,
+          amount: swap,
+          destination: msg.from, 
+          responseDestination: myAddress(), 
+          customPayload: null,
+          forwardTonAmount: ton("0.01"), 
+          forwardPayload: emptySlice()
+        }.toCell()
+      });
     }
   }
 
