@@ -82,10 +82,10 @@ contract Task5 with Deployable {
       return;
     }
 
-    let swap: Bool = context().value - ton("2.1") >= 0 && self.next_item > 0;
+    let swap: Bool = context().value - ton("2.1") >= 0;
     let refund: Bool = context().value - ton("0.1") > 0;
 
-    if(refund) {
+    if((!swap && refund) || self.next_item == 0) {
       nativeReserve(myBalance() - context().value, 0);
       send(SendParameters{
         to: sender(),
@@ -101,9 +101,7 @@ contract Task5 with Deployable {
         }.toCell()
       });
       return;
-    } 
-    
-    if(swap) {
+    } else {
      
       let luck: Int = random(0, self.next_item);
       let value: Int = context().value - ton("2");
