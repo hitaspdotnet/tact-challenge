@@ -132,7 +132,7 @@ contract Task3 with Deployable {
       send(SendParameters{
         to: address_des,
         value: 0,
-        mode: SendRemainingValue,
+        mode: SendPayGasSeparately,
         body: TokenTransfer {
           queryId: 0,
           amount: swap,
@@ -148,7 +148,7 @@ contract Task3 with Deployable {
         send(SendParameters{
           to: address_src,
           value: 0,
-          mode: SendRemainingValue,
+          mode: SendPayGasSeparately,
           body: TokenTransfer {
             queryId: msg.queryId,
             amount: restAmount,
