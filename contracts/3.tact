@@ -39,21 +39,18 @@ message(0x7362d09c) TokenNotification {
     forwardPayload: Slice as remaining;
 }
 
+// To simplify the testing process and the specificity of the messages being sent, we decided to add clear default values in this transaction
 message(0xf8a7ea5) TokenTransfer {
-    queryId: Int as uint64;
-    amount: Int as coins;
-    destination: Address;
-    responseDestination: Address?;
-    customPayload: Cell?;
-    forwardTonAmount: Int as coins;
-    forwardPayload: Slice as remaining;
+     queryId: Int as uint64; // should be 0
+     amount: Int as coins; // should be amount of jettons to send
+     destination: Address; // should be user address / TokenNotification.from
+     responseDestination: Address?; // should be myAddress()
+     customPayload: Cell?; // should be null
+     forwardTonAmount: Int as coins; // should be ton("0.01")
+     forwardPayload: Slice as remaining; // should be emptySlice()
 }
 
-inline fun calc_price(balance_src: Int, balance_des: Int, decimal: Int): Int {
-  if(balance_src == 0 || balance_des == 0) {
-    return 0;
-  }
-  
+inline fun calc_price(balance_src: Int, balance_des: Int, decimal: Int): Int { 
   return balance_des * decimal / balance_src;
 }
 
@@ -105,29 +102,30 @@ contract Task3 with Deployable {
     }
 
     let swap: Int = calc_swap(balance_src, balance_des, received, self.decimal);
-    let price: Int =  calc_price(balance_src, balance_des, self.decimal);
 
-    if (balance_des < swap || price == 0) {
+    if (balance_des < swap || swap == 0) {
       send(SendParameters{
         to: address_src,
         value: 0,
         mode: SendRemainingValue,
         body: TokenTransfer {
-          queryId: msg.queryId,
+          queryId: 0,
           amount: received,
           destination: msg.from, 
           responseDestination: myAddress(), 
           customPayload: null,
-          forwardTonAmount: 0, 
+          forwardTonAmount: ton("0.01"), 
           forwardPayload: emptySlice()
         }.toCell()
       });
     } else {
+      let restAmount: Int = received % swap;
+
       if(address_src == self.jettonAddressA) {
-        self.aAmount = self.aAmount + received;
+        self.aAmount = self.aAmount + (received - restAmount);
         self.bAmount = self.bAmount - swap;
       } else {
-        self.bAmount = self.bAmount + received;
+        self.bAmount = self.bAmount + (received - restAmount);
         self.aAmount = self.aAmount - swap;
       }
 
@@ -136,15 +134,32 @@ contract Task3 with Deployable {
         value: 0,
         mode: SendRemainingValue,
         body: TokenTransfer {
-          queryId: msg.queryId,
+          queryId: 0,
           amount: swap,
           destination: msg.from, 
           responseDestination: myAddress(), 
           customPayload: null,
-          forwardTonAmount: 0, 
+          forwardTonAmount: ton("0.01"), 
           forwardPayload: emptySlice()
         }.toCell()
       });
+
+      if(restAmount > 0) {
+        send(SendParameters{
+          to: address_src,
+          value: 0,
+          mode: SendRemainingValue,
+          body: TokenTransfer {
+            queryId: msg.queryId,
+            amount: restAmount,
+            destination: msg.from, 
+            responseDestination: myAddress(), 
+            customPayload: null,
+            forwardTonAmount: ton("0.01"), 
+            forwardPayload: emptySlice()
+          }.toCell()
+        });
+      }
     }
   }
 
