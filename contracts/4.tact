@@ -57,11 +57,9 @@ contract Task4 with Deployable {
   }
 
   receive(msg: OwnershipAssigned) {
-    let ctx: Context = context();
-
     if(self.nft != null){
       send(SendParameters{
-        to: ctx.sender,
+        to: sender(),
         value: 0,
         mode: SendRemainingValue,
         body: Transfer {
@@ -73,21 +71,19 @@ contract Task4 with Deployable {
           forwardPayload: emptySlice()
         }.toCell()
       });
-      return;
-    } 
-
-    self.nft = ctx.sender;
-    self.owner = msg.prevOwner;
-    self.lockUntil = now() + msg.forwardPayload.loadUint(32);
+    } else {
+      self.nft = sender();
+      self.owner = msg.prevOwner;
+      self.lockUntil = now() + msg.forwardPayload.loadUint(32);
+    }
   }
 
   receive(msg: NftWithdrawal) {
-    let ctx: Context = context();
-    require(self.owner == ctx.sender, "Invalid sender");
+    require(self.owner == sender(), "Invalid sender");
     
     if(self.lockUntil > now()){
       send(SendParameters{
-        to: ctx.sender,
+        to: sender(),
         value: 0,
         mode: SendRemainingValue,
         body: "NFT is still locked".asComment()
