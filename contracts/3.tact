@@ -77,7 +77,6 @@ contract Task3 with Deployable {
 
   receive(msg: TokenNotification) {
     require(sender() == self.jettonAddressA || sender() == self.jettonAddressB, "Unsupported jetton sent!");
-    require(msg.amount > 0, "Invalid amount sent!");
 
     if(msg.from == self.owner) {
       if(sender() == self.jettonAddressA) {
@@ -86,13 +85,13 @@ contract Task3 with Deployable {
         self.bAmount = self.bAmount + msg.amount;
       }
       return;
-    }
-
+    } 
+    
     if (self.aAmount == 0 || self.bAmount == 0 || msg.amount == 0) {
       send(SendParameters{
         to: sender(),
         value: 0,
-        mode: SendRemainingValue,
+        mode: SendPayGasSeparately,
         body: TokenTransfer {
           queryId: 0,
           amount: msg.amount,
@@ -112,7 +111,7 @@ contract Task3 with Deployable {
         send(SendParameters{
           to: sender(),
           value: 0,
-          mode: SendRemainingValue,
+          mode: SendPayGasSeparately,
           body: TokenTransfer {
             queryId: 0,
             amount: msg.amount,
@@ -125,7 +124,6 @@ contract Task3 with Deployable {
         });
         return;
       }
-      let restAmount: Int = msg.amount % swap;
 
       send(SendParameters{
         to: self.jettonAddressB,
@@ -142,56 +140,14 @@ contract Task3 with Deployable {
         }.toCell()
       });
 
-      if(restAmount > 0) {
-        send(SendParameters{
-          to: self.jettonAddressA,
-          value: 0,
-          mode: SendPayGasSeparately,
-          body: TokenTransfer {
-            queryId: 0,
-            amount: restAmount,
-            destination: msg.from, 
-            responseDestination: myAddress(), 
-            customPayload: null,
-            forwardTonAmount: ton("0.01"), 
-            forwardPayload: emptySlice()
-          }.toCell()
-        });
-      }
-      self.aAmount = self.aAmount + (msg.amount - restAmount);
-      self.bAmount = self.bAmount - swap;
-
-      return;
-    }
-
-    if(sender() == self.jettonAddressB){
-      let swap: Int = calc_swap(self.bAmount, self.aAmount, msg.amount, self.decimal);
-      if (swap == 0 || self.aAmount < swap) {
-        send(SendParameters{
-          to: sender(),
-          value: 0,
-          mode: SendRemainingValue,
-          body: TokenTransfer {
-            queryId: 0,
-            amount: msg.amount,
-            destination: msg.from, 
-            responseDestination: myAddress(), 
-            customPayload: null,
-            forwardTonAmount: ton("0.01"), 
-            forwardPayload: emptySlice()
-          }.toCell()
-        });
-        return;
-      }
-      let restAmount: Int = msg.amount % swap;
-
       send(SendParameters{
-        to: self.jettonAddressA,
+        to: sender(),
         value: 0,
-        mode: SendPayGasSeparately,
+        mode: SendRemainingValue + SendIgnoreErrors,
+        bounce: true,
         body: TokenTransfer {
           queryId: 0,
-          amount: swap,
+          amount: msg.amount % swap,
           destination: msg.from, 
           responseDestination: myAddress(), 
           customPayload: null,
@@ -200,24 +156,8 @@ contract Task3 with Deployable {
         }.toCell()
       });
 
-      if(restAmount > 0) {
-        send(SendParameters{
-          to: self.jettonAddressB,
-          value: 0,
-          mode: SendPayGasSeparately,
-          body: TokenTransfer {
-            queryId: 0,
-            amount: restAmount,
-            destination: msg.from, 
-            responseDestination: myAddress(), 
-            customPayload: null,
-            forwardTonAmount: ton("0.01"), 
-            forwardPayload: emptySlice()
-          }.toCell()
-        });
-      }
-      self.bAmount = self.bAmount + (msg.amount - restAmount);
-      self.aAmount = self.aAmount - swap;
+      self.aAmount = self.aAmount + (msg.amount - (msg.amount % swap));
+      self.bAmount = self.bAmount - swap;
 
       return;
     }
