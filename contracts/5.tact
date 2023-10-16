@@ -82,7 +82,7 @@ contract Task5 with Deployable {
       return;
     }
 
-    let swap: Bool = (context().value - ton("2.1") > 0) && (self.next_item == 0);
+    let swap: Bool = (context().value - ton("2.1") > 0) && (self.next_item > 0);
     let refund: Bool = (context().value - ton("0.1") > 0) && (swap == false);
 
     if(swap) {
@@ -99,7 +99,7 @@ contract Task5 with Deployable {
       send(SendParameters{
         to: swapItemAddress!!,
         value: 0,
-        mode: SendRemainingValue,
+        mode: SendRemainingBalance,
         body: Transfer {
           queryId: msg.queryId,
           newOwner: msg.prevOwner,
@@ -117,7 +117,7 @@ contract Task5 with Deployable {
       send(SendParameters{
         to: sender(),
         value: 0,
-        mode: SendRemainingValue,
+        mode: SendRemainingBalance,
         body: Transfer {
           queryId: msg.queryId,
           newOwner: msg.prevOwner,
@@ -136,7 +136,7 @@ contract Task5 with Deployable {
     send(SendParameters{
         to: sender(),
         value: myBalance() - context().value - ton("0.1"),
-        mode: SendRemainingValue,
+        mode: SendRemainingValue + SendIgnoreErrors,
         body: AdminFetchProfit {
           queryId: msg.queryId
         }.toCell()
@@ -153,7 +153,6 @@ contract Task5 with Deployable {
 
     require(restAmount >= 0, "Insufficent funds");
     require(sender() == self.owner || sender() == myAddress(), "Invalid sender");
-    nativeReserve(myBalance() - context().value, 0);
 
     let i: Int = 0;
     let n: Int = self.next_item - 1;
@@ -196,8 +195,8 @@ contract Task5 with Deployable {
     if(restAmount > 0) {
       send(SendParameters{
         to: self.owner,
-        value: 0,
-        mode: SendRemainingBalance,
+        value: restAmount,
+        mode: SendIgnoreErrors,
         body: emptyCell()
       });
     }
