@@ -107,6 +107,8 @@ contract Task3 with Deployable {
 
     if(sender() == self.jettonAddressA){
       let swap: Int = calc_swap(self.aAmount, self.bAmount, msg.amount, self.decimal);
+      let price: Int = calc_price(self.aAmount, self.bAmount, self.decimal);
+
       if (swap == 0 || self.bAmount < swap) {
         send(SendParameters{
           to: sender(),
@@ -140,30 +142,34 @@ contract Task3 with Deployable {
         }.toCell()
       });
 
-      send(SendParameters{
-        to: sender(),
-        value: 0,
-        mode: SendRemainingValue + SendIgnoreErrors,
-        bounce: true,
-        body: TokenTransfer {
-          queryId: 0,
-          amount: msg.amount % swap,
-          destination: msg.from, 
-          responseDestination: myAddress(), 
-          customPayload: null,
-          forwardTonAmount: ton("0.01"), 
-          forwardPayload: emptySlice()
-        }.toCell()
-      });
+      if(msg.amount - (swap * price) > 0) {
+        send(SendParameters{
+          to: sender(),
+          value: 0,
+          mode: SendRemainingValue + SendIgnoreErrors,
+          bounce: true,
+          body: TokenTransfer {
+            queryId: 0,
+            amount: msg.amount - (swap * price),
+            destination: msg.from, 
+            responseDestination: myAddress(), 
+            customPayload: null,
+            forwardTonAmount: ton("0.01"), 
+            forwardPayload: emptySlice()
+          }.toCell()
+        });
+      }
 
-      self.aAmount = self.aAmount + (msg.amount - (msg.amount % swap));
+      self.aAmount = self.aAmount + (msg.amount - (swap * price));
       self.bAmount = self.bAmount - swap;
 
       return;
     }
-    
+
     if(sender() == self.jettonAddressB){
       let swap: Int = calc_swap(self.bAmount, self.aAmount, msg.amount, self.decimal);
+      let price: Int = calc_price(self.bAmount, self.aAmount, self.decimal);
+
       if (swap == 0 || self.aAmount < swap) {
         send(SendParameters{
           to: sender(),
@@ -197,23 +203,25 @@ contract Task3 with Deployable {
         }.toCell()
       });
 
-      send(SendParameters{
-        to: sender(),
-        value: 0,
-        mode: SendRemainingValue + SendIgnoreErrors,
-        bounce: true,
-        body: TokenTransfer {
-          queryId: 0,
-          amount: msg.amount % swap,
-          destination: msg.from, 
-          responseDestination: myAddress(), 
-          customPayload: null,
-          forwardTonAmount: ton("0.01"), 
-          forwardPayload: emptySlice()
-        }.toCell()
-      });
+      if(msg.amount - (swap * price) > 0) {
+        send(SendParameters{
+          to: sender(),
+          value: 0,
+          mode: SendRemainingValue + SendIgnoreErrors,
+          bounce: true,
+          body: TokenTransfer {
+            queryId: 0,
+            amount: msg.amount - (swap * price),
+            destination: msg.from, 
+            responseDestination: myAddress(), 
+            customPayload: null,
+            forwardTonAmount: ton("0.01"), 
+            forwardPayload: emptySlice()
+          }.toCell()
+        });
+      }
 
-      self.bAmount = self.bAmount + (msg.amount - (msg.amount % swap));
+      self.bAmount = self.bAmount + (msg.amount - (swap * price));
       self.aAmount = self.aAmount - swap;
 
       return;
@@ -222,11 +230,11 @@ contract Task3 with Deployable {
 
   get fun price(jetton: Address): Int { 
     if(jetton == self.jettonAddressA) {
-      return calc_price(self.aAmount, self.bAmount, self.decimal);
+      return self.aAmount * self.decimal / self.bAmount;
     }
 
     if(jetton == self.jettonAddressB) {
-      return calc_price(self.bAmount, self.aAmount, self.decimal);
+      return self.bAmount * self.decimal / self.aAmount;
     }
 
     return 0;
