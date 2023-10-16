@@ -51,11 +51,20 @@ message(0xf8a7ea5) TokenTransfer {
 }
 
 inline fun calc_price(balance_src: Int, balance_des: Int, decimal: Int): Int { 
+  if(balance_src == 0 || balance_des == 0) {
+    return 0;
+  }
   return balance_des * decimal / balance_src;
 }
 
 inline fun calc_swap(balance_src: Int, balance_des: Int, received: Int, decimal: Int): Int {
-  return (calc_price(balance_src, balance_des, decimal) * received) / decimal;
+  let price: Int = calc_price(balance_src, balance_des, decimal);
+  
+  if(price == 0) {
+    return 0;
+  }
+
+  return ( price * received) / decimal;
 }
 
 contract Task3 with Deployable {
