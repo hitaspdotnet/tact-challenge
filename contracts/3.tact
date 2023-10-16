@@ -50,13 +50,15 @@ message(0xf8a7ea5) TokenTransfer {
 }
 
 inline fun calc_price(balance_src: Int, balance_des: Int, decimal: Int): Int {
-  let price: Int = balance_des * decimal / balance_src;
-  return price;
+  if(balance_src == 0 || balance_des == 0) {
+    return 0;
+  }
+  
+  return balance_des * decimal / balance_src;
 }
 
 inline fun calc_swap(balance_src: Int, balance_des: Int, received: Int, decimal: Int): Int {
-  let swap: Int = (calc_price(balance_src, balance_des, decimal) * received) / decimal;
-  return swap;
+  return (calc_price(balance_src, balance_des, decimal) * received) / decimal;
 }
 
 contract Task3 with Deployable {
@@ -103,8 +105,9 @@ contract Task3 with Deployable {
     }
 
     let swap: Int = calc_swap(balance_src, balance_des, received, self.decimal);
+    let price: Int =  calc_price(balance_src, balance_des, self.decimal);
 
-    if (balance_des < swap) {
+    if (balance_des < swap || price == 0) {
       send(SendParameters{
         to: address_src,
         value: 0,
@@ -116,7 +119,7 @@ contract Task3 with Deployable {
           responseDestination: myAddress(), 
           customPayload: null,
           forwardTonAmount: 0, 
-          forwardPayload: msg.forwardPayload
+          forwardPayload: emptySlice()
         }.toCell()
       });
     } else {
@@ -139,7 +142,7 @@ contract Task3 with Deployable {
           responseDestination: myAddress(), 
           customPayload: null,
           forwardTonAmount: 0, 
-          forwardPayload: msg.forwardPayload
+          forwardPayload: emptySlice()
         }.toCell()
       });
     }
