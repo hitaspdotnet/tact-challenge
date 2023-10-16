@@ -91,7 +91,7 @@ contract Task5 with Deployable {
       send(SendParameters{
         to: ctx.sender,
         value: 0,
-        mode: SendRemainingValue + SendIgnoreErrors,
+        mode: SendRemainingBalance,
         body: Transfer {
           queryId: msg.queryId,
           newOwner: msg.prevOwner,
@@ -159,11 +159,17 @@ contract Task5 with Deployable {
 
   receive(msg: AdminWithdrawalAllNFTs) {
     let ctx: Context = context();
-    let restAmount: Int = ctx.value - (self.next_item * ton("0.08"));
+    let restAmount: Int = 0;
+    if(ctx.sender == myAddress()) {
+      restAmount = ctx.value - (self.next_item * ton("0.08"));
+    } else {
+      restAmount = ctx.value - (ton("1") + self.next_item * ton("0.08"));
+    }
 
     require(restAmount >= 0, "Insufficent funds");
     require(ctx.sender == self.owner || ctx.sender == myAddress(), "Invalid sender");
-    
+    nativeReserve(myBalance() - ctx.value, 0);
+
     let i: Int = 0;
     let n: Int = self.next_item - 1;
     do {
@@ -182,10 +188,10 @@ contract Task5 with Deployable {
             forwardPayload: emptySlice()
           }.toCell()
         });
+        self.nfts.set(n, null);
+        self.next_item = self.next_item - 1;
       }
-      
-      self.nfts.set(n, null);
-      self.next_item = self.next_item - 1;
+
       i = i + 1;
       n = n - 1;
     } until (self.next_item == 0 || i >= 100); 
@@ -194,20 +200,20 @@ contract Task5 with Deployable {
       send(SendParameters{
         to: myAddress(),
         value: 0,
-        mode: SendRemainingValue,
+        mode: SendRemainingBalance,
         body: AdminWithdrawalAllNFTs {
           queryId: msg.queryId
         }.toCell()
       });
-      return;
-    }
-
-    if(restAmount > 0) {
-      send(SendParameters{
-        to: self.owner,
-        value: 0,
-        mode: SendRemainingValue
-      });
+    } else {
+      if(restAmount > 0) {
+        send(SendParameters{
+          to: self.owner,
+          value: 0,
+          mode: SendRemainingBalance,
+          body: emptyCell()
+        });
+      }
     }
   }
 
