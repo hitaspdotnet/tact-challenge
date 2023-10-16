@@ -51,20 +51,11 @@ message(0xf8a7ea5) TokenTransfer {
 }
 
 inline fun calc_price(balance_src: Int, balance_des: Int, decimal: Int): Int { 
-  if(balance_src == 0 || balance_des == 0) {
-    return 0;
-  }
   return balance_des * decimal / balance_src;
 }
 
 inline fun calc_swap(balance_src: Int, balance_des: Int, received: Int, decimal: Int): Int {
-  let price: Int = calc_price(balance_src, balance_des, decimal);
-
-  if(price == 0) {
-    return 0;
-  }
-
-  return ( price * received) / decimal;
+  return (balance_des * decimal / balance_src) * received / decimal;
 }
 
 contract Task3 with Deployable {
@@ -85,10 +76,11 @@ contract Task3 with Deployable {
   }
 
   receive(msg: TokenNotification) {
-    require(sender() == self.jettonAddressA || sender() == self.jettonAddressB, "Unsupported jetton sent!");
-  
+    let ctx: Context = context();
+    require(ctx.sender == self.jettonAddressA || ctx.sender == self.jettonAddressB, "Unsupported jetton sent!");
+    
     if(msg.from == self.owner) {
-      if(sender() == self.jettonAddressA) {
+      if(ctx.sender == self.jettonAddressA) {
         self.aAmount = self.aAmount + msg.amount;
       } else {
         self.bAmount = self.bAmount + msg.amount;
@@ -102,7 +94,7 @@ contract Task3 with Deployable {
     let balance_src: Int = self.aAmount;
     let balance_des: Int = self.bAmount;
 
-    if(sender() == self.jettonAddressB) {
+    if(ctx.sender == self.jettonAddressB) {
       address_src = self.jettonAddressB;
       address_des = self.jettonAddressA;
       balance_src = self.bAmount;
@@ -115,7 +107,7 @@ contract Task3 with Deployable {
       send(SendParameters{
         to: address_src,
         value: 0,
-        mode: SendPayGasSeparately,
+        mode: SendRemainingValue,
         body: TokenTransfer {
           queryId: 0,
           amount: received,
@@ -156,7 +148,7 @@ contract Task3 with Deployable {
         send(SendParameters{
           to: address_src,
           value: 0,
-          mode: SendRemainingValue,
+          mode: SendPayGasSeparately,
           body: TokenTransfer {
             queryId: msg.queryId,
             amount: restAmount,
