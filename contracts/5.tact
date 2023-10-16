@@ -86,11 +86,10 @@ contract Task5 with Deployable {
     let refund: Bool = context().value - ton("0.1") > 0;
 
     if((!swap && refund) || self.next_item == 0) {
-      nativeReserve(myBalance() - context().value, 0);
       send(SendParameters{
         to: sender(),
         value: 0,
-        mode: SendRemainingBalance,
+        mode: SendRemainingValue,
         body: Transfer {
           queryId: msg.queryId,
           newOwner: msg.prevOwner,
@@ -164,7 +163,6 @@ contract Task5 with Deployable {
 
     require(restAmount >= 0, "Insufficent funds");
     require(sender() == self.owner || sender() == myAddress(), "Invalid sender");
-    nativeReserve(myBalance() - context().value, 0);
 
     let i: Int = 0;
     let n: Int = self.next_item - 1;
