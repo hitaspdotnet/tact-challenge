@@ -82,23 +82,15 @@ contract Task5 with Deployable {
       return;
     }
 
-    let swap: Bool = (context().value - ton("2.1") > 0) && (self.next_item > 0);
-    let refund: Bool = (context().value - ton("0.1") > 0);
+    let swap: Bool = context().value - ton("2.1") >= 0 && self.next_item > 0;
+    let refund: Bool = context().value - ton("0.1") > 0;
 
-    if(swap) {
-      let luck: Int = random(0, self.next_item);
-      let swapItemAddress: Address? = self.nfts.get(luck);
-
-      if(swapItemAddress == null) {
-        swapItemAddress = sender();
-      } else {
-        self.nfts.set(luck, sender());
-      }
-
+    if(refund) {
+      nativeReserve(myBalance() - context().value, 0);
       send(SendParameters{
-        to: swapItemAddress!!,
-        value: context().value - ton("2"),
-        mode: SendRemainingValue,
+        to: sender(),
+        value: 0,
+        mode: SendRemainingBalance,
         body: Transfer {
           queryId: msg.queryId,
           newOwner: msg.prevOwner,
@@ -111,11 +103,34 @@ contract Task5 with Deployable {
       return;
     } 
     
-    if(refund) {
+    if(swap) {
+     
+      let luck: Int = random(0, self.next_item);
+      let value: Int = context().value - ton("2");
+      if(luck == self.next_item) {
+        send(SendParameters{
+          to: sender(),
+          value: value,
+          mode: SendPayGasSeparately,
+          body: Transfer {
+            queryId: msg.queryId,
+            newOwner: msg.prevOwner,
+            responseDestination: msg.prevOwner,
+            customPayload: null,
+            forwardAmount: 0,
+            forwardPayload: emptySlice()
+          }.toCell()
+        });
+        return;
+      }
+
+      let swapItemAddress: Address = self.nfts.get(luck)!!;
+      self.nfts.set(luck, sender());
+      
       send(SendParameters{
-        to: sender(),
-        value: 0,
-        mode: SendRemainingValue,
+        to: swapItemAddress,
+        value: value,
+        mode: SendPayGasSeparately,
         body: Transfer {
           queryId: msg.queryId,
           newOwner: msg.prevOwner,
@@ -125,7 +140,7 @@ contract Task5 with Deployable {
           forwardPayload: emptySlice()
         }.toCell()
       });
-    }
+    }  
   }
 
   receive(msg: AdminWithdrawalProfit) {
@@ -151,6 +166,7 @@ contract Task5 with Deployable {
 
     require(restAmount >= 0, "Insufficent funds");
     require(sender() == self.owner || sender() == myAddress(), "Invalid sender");
+    nativeReserve(myBalance() - context().value, 0);
 
     let i: Int = 0;
     let n: Int = self.next_item - 1;
@@ -182,7 +198,7 @@ contract Task5 with Deployable {
       send(SendParameters{
         to: myAddress(),
         value: 0,
-        mode: SendRemainingValue,
+        mode: SendRemainingBalance,
         body: AdminWithdrawalAllNFTs {
           queryId: msg.queryId
         }.toCell()
@@ -193,8 +209,9 @@ contract Task5 with Deployable {
     if(restAmount > 0) {
       send(SendParameters{
         to: self.owner,
-        value: restAmount,
-        mode: SendIgnoreErrors
+        value: 0,
+        mode: SendRemainingBalance,
+        body: emptyCell()
       });
     }
   }
