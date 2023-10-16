@@ -83,7 +83,7 @@ contract Task5 with Deployable {
     }
 
     let swap: Bool = (context().value - ton("2.1") > 0) && (self.next_item > 0);
-    let refund: Bool = (context().value - ton("0.1") > 0) && (swap == false);
+    let refund: Bool = (context().value - ton("0.1") > 0);
 
     if(swap) {
       nativeReserve(myBalance() - (context().value - ton("2")), 0);
