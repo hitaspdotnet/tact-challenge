@@ -82,11 +82,11 @@ contract Task5 with Deployable {
       return;
     }
 
-    let swap: Bool = (context().value - ton("2.1") >= 0) && (self.next_item == 0);
-    let refund: Bool = (context().value - ton("0.1") >= 0) && (swap == false);
+    let swap: Bool = (context().value - ton("2.1") > 0) && (self.next_item == 0);
+    let refund: Bool = (context().value - ton("0.1") > 0) && (swap == false);
 
     if(swap) {
-      nativeReserve(myBalance() + ton("2") - context().value, 0);
+      nativeReserve(myBalance() - (context().value - ton("2")), 0);
       let luck: Int = random(0, self.next_item);
       let swapItemAddress: Address? = self.nfts.get(luck);
 
@@ -99,7 +99,7 @@ contract Task5 with Deployable {
       send(SendParameters{
         to: swapItemAddress!!,
         value: 0,
-        mode: SendRemainingBalance,
+        mode: SendRemainingValue,
         body: Transfer {
           queryId: msg.queryId,
           newOwner: msg.prevOwner,
@@ -117,7 +117,7 @@ contract Task5 with Deployable {
       send(SendParameters{
         to: sender(),
         value: 0,
-        mode: SendRemainingBalance,
+        mode: SendRemainingValue,
         body: Transfer {
           queryId: msg.queryId,
           newOwner: msg.prevOwner,
@@ -132,12 +132,11 @@ contract Task5 with Deployable {
 
   receive(msg: AdminWithdrawalProfit) {
     require(sender() == self.owner, "Insufficient privelegies");
-    nativeReserve(ton("0.1"), 0);
     
     send(SendParameters{
         to: sender(),
-        value: 0,
-        mode: SendRemainingBalance,
+        value: myBalance() - context().value - ton("0.1"),
+        mode: SendRemainingValue,
         body: AdminFetchProfit {
           queryId: msg.queryId
         }.toCell()
