@@ -106,8 +106,8 @@ contract Task3 with Deployable {
     }
 
     if(sender() == self.jettonAddressA){
-      let swap: Int = calc_swap(self.aAmount, self.bAmount, msg.amount, self.decimal);
-      let price: Int = calc_price(self.aAmount, self.bAmount, self.decimal);
+      let price: Int = self.bAmount * self.decimal / self.aAmount;
+      let swap: Int =  price * msg.amount / self.decimal;
 
       if (swap == 0 || self.bAmount < swap) {
         send(SendParameters{
@@ -160,15 +160,15 @@ contract Task3 with Deployable {
         });
       }
 
-      self.aAmount = self.aAmount + (msg.amount - (swap * price));
-      self.bAmount = self.bAmount - swap;
+      // self.aAmount = self.aAmount + (msg.amount - (swap * price));
+      // self.bAmount = self.bAmount - swap;
 
       return;
     }
 
     if(sender() == self.jettonAddressB){
-      let swap: Int = calc_swap(self.bAmount, self.aAmount, msg.amount, self.decimal);
-      let price: Int = calc_price(self.bAmount, self.aAmount, self.decimal);
+      let price: Int = self.aAmount * self.decimal / self.bAmount;
+      let swap: Int =  price * msg.amount / self.decimal;
 
       if (swap == 0 || self.aAmount < swap) {
         send(SendParameters{
@@ -221,8 +221,8 @@ contract Task3 with Deployable {
         });
       }
 
-      self.bAmount = self.bAmount + (msg.amount - (swap * price));
-      self.aAmount = self.aAmount - swap;
+      // self.bAmount = self.bAmount + (msg.amount - (swap * price));
+      // self.aAmount = self.aAmount - swap;
 
       return;
     }
