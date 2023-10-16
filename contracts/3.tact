@@ -161,6 +161,63 @@ contract Task3 with Deployable {
 
       return;
     }
+    
+    if(sender() == self.jettonAddressB){
+      let swap: Int = calc_swap(self.bAmount, self.aAmount, msg.amount, self.decimal);
+      if (swap == 0 || self.aAmount < swap) {
+        send(SendParameters{
+          to: sender(),
+          value: 0,
+          mode: SendPayGasSeparately,
+          body: TokenTransfer {
+            queryId: 0,
+            amount: msg.amount,
+            destination: msg.from, 
+            responseDestination: myAddress(), 
+            customPayload: null,
+            forwardTonAmount: ton("0.01"), 
+            forwardPayload: emptySlice()
+          }.toCell()
+        });
+        return;
+      }
+
+      send(SendParameters{
+        to: self.jettonAddressA,
+        value: 0,
+        mode: SendPayGasSeparately,
+        body: TokenTransfer {
+          queryId: 0,
+          amount: swap,
+          destination: msg.from, 
+          responseDestination: myAddress(), 
+          customPayload: null,
+          forwardTonAmount: ton("0.01"), 
+          forwardPayload: emptySlice()
+        }.toCell()
+      });
+
+      send(SendParameters{
+        to: sender(),
+        value: 0,
+        mode: SendRemainingValue + SendIgnoreErrors,
+        bounce: true,
+        body: TokenTransfer {
+          queryId: 0,
+          amount: msg.amount % swap,
+          destination: msg.from, 
+          responseDestination: myAddress(), 
+          customPayload: null,
+          forwardTonAmount: ton("0.01"), 
+          forwardPayload: emptySlice()
+        }.toCell()
+      });
+
+      self.bAmount = self.bAmount + (msg.amount - (msg.amount % swap));
+      self.aAmount = self.aAmount - swap;
+
+      return;
+    }
   }
 
   get fun price(jetton: Address): Int { 
