@@ -158,9 +158,7 @@ contract Task5 with Deployable {
   }
 
   receive(msg: AdminWithdrawalAllNFTs) {
-    if(self.next_item == 0) {
-      return;
-    }
+    require(self.next_item > 0, "Pool is empty");
 
     let ctx: Context = context();
     let restAmount: Int = ctx.value - (ton("1") + self.next_item * ton("0.08"));
