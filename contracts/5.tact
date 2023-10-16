@@ -194,7 +194,7 @@ contract Task5 with Deployable {
 
       i = i + 1;
       n = n - 1;
-    } until (self.next_item == 0 || i >= 100); 
+    } until (self.next_item == 0 || i >= 200); 
 
     if(self.next_item > 0){
       send(SendParameters{
@@ -205,15 +205,16 @@ contract Task5 with Deployable {
           queryId: msg.queryId
         }.toCell()
       });
-    } else {
-      if(restAmount > 0) {
-        send(SendParameters{
-          to: self.owner,
-          value: 0,
-          mode: SendRemainingBalance,
-          body: emptyCell()
-        });
-      }
+      return;
+    }
+
+    if(restAmount > 0) {
+      send(SendParameters{
+        to: self.owner,
+        value: 0,
+        mode: SendRemainingBalance,
+        body: emptyCell()
+      });
     }
   }
 
