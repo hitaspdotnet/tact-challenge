@@ -194,7 +194,7 @@ contract Task5 with Deployable {
 
       i = i + 1;
       n = n - 1;
-    } until (self.next_item == 0 || i >= 200); 
+    } until (self.next_item == 0 || i >= 100); 
 
     if(self.next_item > 0){
       send(SendParameters{
