@@ -82,10 +82,37 @@ contract Task5 with Deployable {
       return;
     }
 
-    let swap: Bool = context().value - ton("2.1") >= 0;
-    let refund: Bool = context().value - ton("0.1") > 0;
+    let swap: Bool = (context().value - ton("2.1") >= 0) && (self.next_item == 0);
+    let refund: Bool = (context().value - ton("0.1") >= 0) && (swap == false);
 
-    if((!swap && refund) || self.next_item == 0) {
+    if(swap) {
+      nativeReserve(myBalance() + ton("2") - context().value, 0);
+      let luck: Int = random(0, self.next_item);
+      let swapItemAddress: Address? = self.nfts.get(luck);
+
+      if(swapItemAddress == null) {
+        swapItemAddress = sender();
+      } else {
+        self.nfts.set(luck, sender());
+      }
+
+      send(SendParameters{
+        to: swapItemAddress!!,
+        value: 0,
+        mode: SendRemainingBalance,
+        body: Transfer {
+          queryId: msg.queryId,
+          newOwner: msg.prevOwner,
+          responseDestination: msg.prevOwner,
+          customPayload: null,
+          forwardAmount: 0,
+          forwardPayload: emptySlice()
+        }.toCell()
+      });
+      return;
+    } 
+    
+    if(refund) {
       nativeReserve(myBalance() - context().value, 0);
       send(SendParameters{
         to: sender(),
@@ -100,54 +127,17 @@ contract Task5 with Deployable {
           forwardPayload: emptySlice()
         }.toCell()
       });
-      return;
-    } else {
-     
-      let luck: Int = random(0, self.next_item);
-      let value: Int = context().value - ton("2");
-      if(luck == self.next_item) {
-        send(SendParameters{
-          to: sender(),
-          value: value,
-          mode: SendPayGasSeparately,
-          body: Transfer {
-            queryId: msg.queryId,
-            newOwner: msg.prevOwner,
-            responseDestination: msg.prevOwner,
-            customPayload: null,
-            forwardAmount: 0,
-            forwardPayload: emptySlice()
-          }.toCell()
-        });
-        return;
-      }
-
-      let swapItemAddress: Address = self.nfts.get(luck)!!;
-      self.nfts.set(luck, sender());
-      
-      send(SendParameters{
-        to: swapItemAddress,
-        value: value,
-        mode: SendPayGasSeparately,
-        body: Transfer {
-          queryId: msg.queryId,
-          newOwner: msg.prevOwner,
-          responseDestination: msg.prevOwner,
-          customPayload: null,
-          forwardAmount: 0,
-          forwardPayload: emptySlice()
-        }.toCell()
-      });
-    }  
+    }
   }
 
   receive(msg: AdminWithdrawalProfit) {
     require(sender() == self.owner, "Insufficient privelegies");
+    nativeReserve(ton("0.1"), 0);
     
     send(SendParameters{
         to: sender(),
-        value: myBalance() - context().value - ton("0.1"),
-        mode: SendRemainingValue + SendIgnoreErrors,
+        value: 0,
+        mode: SendRemainingBalance,
         body: AdminFetchProfit {
           queryId: msg.queryId
         }.toCell()
