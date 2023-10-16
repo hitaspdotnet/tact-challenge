@@ -140,7 +140,7 @@ contract Task3 with Deployable {
       send(SendParameters{
         to: address_des,
         value: 0,
-        mode: SendIgnoreErrors,
+        mode: SendPayGasSeparately,
         body: TokenTransfer {
           queryId: 0,
           amount: swap,
@@ -156,7 +156,7 @@ contract Task3 with Deployable {
         send(SendParameters{
           to: address_src,
           value: 0,
-          mode: SendIgnoreErrors,
+          mode: SendRemainingValue,
           body: TokenTransfer {
             queryId: msg.queryId,
             amount: restAmount,
@@ -172,10 +172,6 @@ contract Task3 with Deployable {
   }
 
   get fun price(jetton: Address): Int { 
-    if(self.aAmount == 0 || self.bAmount == 0){
-      return 0;
-    }
-
     if(jetton == self.jettonAddressA) {
       return calc_price(self.aAmount, self.bAmount, self.decimal);
     }
