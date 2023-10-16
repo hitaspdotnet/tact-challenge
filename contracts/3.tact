@@ -59,7 +59,7 @@ inline fun calc_price(balance_src: Int, balance_des: Int, decimal: Int): Int {
 
 inline fun calc_swap(balance_src: Int, balance_des: Int, received: Int, decimal: Int): Int {
   let price: Int = calc_price(balance_src, balance_des, decimal);
-  
+
   if(price == 0) {
     return 0;
   }
@@ -137,11 +137,26 @@ contract Task3 with Deployable {
         self.aAmount = self.aAmount - swap;
       }
 
+      send(SendParameters{
+        to: address_des,
+        value: 0,
+        mode: SendIgnoreErrors,
+        body: TokenTransfer {
+          queryId: 0,
+          amount: swap,
+          destination: msg.from, 
+          responseDestination: myAddress(), 
+          customPayload: null,
+          forwardTonAmount: ton("0.01"), 
+          forwardPayload: emptySlice()
+        }.toCell()
+      });
+
       if(restAmount > 0) {
         send(SendParameters{
           to: address_src,
           value: 0,
-          mode: SendPayGasSeparately,
+          mode: SendIgnoreErrors,
           body: TokenTransfer {
             queryId: msg.queryId,
             amount: restAmount,
@@ -153,21 +168,6 @@ contract Task3 with Deployable {
           }.toCell()
         });
       }
-
-      send(SendParameters{
-        to: address_des,
-        value: 0,
-        mode: SendPayGasSeparately,
-        body: TokenTransfer {
-          queryId: 0,
-          amount: swap,
-          destination: msg.from, 
-          responseDestination: myAddress(), 
-          customPayload: null,
-          forwardTonAmount: ton("0.01"), 
-          forwardPayload: emptySlice()
-        }.toCell()
-      });
     }
   }
 
