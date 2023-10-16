@@ -86,7 +86,6 @@ contract Task5 with Deployable {
     let refund: Bool = (context().value - ton("0.1") > 0);
 
     if(swap) {
-      nativeReserve(myBalance() - (context().value - ton("2")), 0);
       let luck: Int = random(0, self.next_item);
       let swapItemAddress: Address? = self.nfts.get(luck);
 
@@ -98,8 +97,8 @@ contract Task5 with Deployable {
 
       send(SendParameters{
         to: swapItemAddress!!,
-        value: 0,
-        mode: SendRemainingBalance,
+        value: context().value - ton("2"),
+        mode: SendRemainingValue,
         body: Transfer {
           queryId: msg.queryId,
           newOwner: msg.prevOwner,
@@ -113,11 +112,10 @@ contract Task5 with Deployable {
     } 
     
     if(refund) {
-      nativeReserve(myBalance() - context().value, 0);
       send(SendParameters{
         to: sender(),
         value: 0,
-        mode: SendRemainingBalance,
+        mode: SendRemainingValue,
         body: Transfer {
           queryId: msg.queryId,
           newOwner: msg.prevOwner,
@@ -184,7 +182,7 @@ contract Task5 with Deployable {
       send(SendParameters{
         to: myAddress(),
         value: 0,
-        mode: SendRemainingBalance,
+        mode: SendRemainingValue,
         body: AdminWithdrawalAllNFTs {
           queryId: msg.queryId
         }.toCell()
@@ -196,8 +194,7 @@ contract Task5 with Deployable {
       send(SendParameters{
         to: self.owner,
         value: restAmount,
-        mode: SendIgnoreErrors,
-        body: emptyCell()
+        mode: SendIgnoreErrors
       });
     }
   }
