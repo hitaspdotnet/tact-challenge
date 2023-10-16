@@ -148,9 +148,9 @@ contract Task3 with Deployable {
         send(SendParameters{
           to: address_src,
           value: 0,
-          mode: SendPayGasSeparately,
+          mode: SendRemainingValue,
           body: TokenTransfer {
-            queryId: msg.queryId,
+            queryId: 0,
             amount: restAmount,
             destination: msg.from, 
             responseDestination: myAddress(), 
@@ -158,6 +158,13 @@ contract Task3 with Deployable {
             forwardTonAmount: ton("0.01"), 
             forwardPayload: emptySlice()
           }.toCell()
+        });
+      } else {
+        send(SendParameters{
+          to: msg.from,
+          value: 0,
+          mode: SendRemainingValue,
+          body: emptyCell()
         });
       }
     }
