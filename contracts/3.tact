@@ -54,10 +54,6 @@ inline fun calc_price(balance_src: Int, balance_des: Int, decimal: Int): Int {
   return balance_des * decimal / balance_src;
 }
 
-inline fun calc_swap(balance_src: Int, balance_des: Int, received: Int, decimal: Int): Int {
-  return (calc_price(balance_src, balance_des, decimal) * received) / decimal;
-}
-
 contract Task3 with Deployable {
   owner: Address;
   aAmount: Int;
@@ -76,11 +72,10 @@ contract Task3 with Deployable {
   }
 
   receive(msg: TokenNotification) {
-    let ctx: Context = context();
-    require(ctx.sender == self.jettonAddressA || ctx.sender == self.jettonAddressB, "Unsupported jetton sent!");
+    require(sender() == self.jettonAddressA || sender() == self.jettonAddressB, "Unsupported jetton sent!");
     
     if(msg.from == self.owner) {
-      if(ctx.sender == self.jettonAddressA) {
+      if(sender() == self.jettonAddressA) {
         self.aAmount = self.aAmount + msg.amount;
       } else {
         self.bAmount = self.bAmount + msg.amount;
@@ -95,15 +90,15 @@ contract Task3 with Deployable {
 
     let received: Int = msg.amount;
 
-    if(ctx.sender == self.jettonAddressB) {
+    if(sender() == self.jettonAddressB) {
       address_src = self.jettonAddressB;
       address_des = self.jettonAddressA;
       balance_src = self.bAmount;
       balance_des = self.aAmount;
     }
 
-    if (msg.amount <= balance_src) {
-      let swap: Int = calc_swap(balance_src, balance_des, received, self.decimal);
+    if (received <= balance_src) {
+      let swap: Int = calc_price(balance_src, balance_des, self.decimal) * received / self.decimal;
       send(SendParameters{
         to: address_des,
         value: 0,
@@ -131,7 +126,7 @@ contract Task3 with Deployable {
 
     self.reply(TokenTransfer { 
         queryId: 0,
-        amount: msg.amount,
+        amount: received,
         destination: msg.from,
         responseDestination: myAddress(),
         customPayload: null,
