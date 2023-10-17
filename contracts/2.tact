@@ -26,11 +26,12 @@ contract Task2 with Deployable {
   }
   
   receive(msg: Refund) {
-    require(sender() == self.admin, "Invalid sender");
+    require(context().sender == self.admin, "Invalid sender");
     send(SendParameters {
       to: msg.sender,
       value: 0,
-      mode: SendRemainingBalance
+      bounce: false,
+      mode: SendRemainingBalance + SendIgnoreErrors
     });
   }
 
@@ -38,8 +39,8 @@ contract Task2 with Deployable {
     send(SendParameters{
       to: self.admin,
       value: 0, 
-      mode: SendRemainingBalance,
-      body: beginCell().storeAddress(sender()).storeRef(msg.asCell()).endCell()
+      mode: SendRemainingBalance + SendIgnoreErrors,
+      body: beginCell().storeAddress(context().sender).storeRef(msg.asCell()).endCell()
     });
   }
 }

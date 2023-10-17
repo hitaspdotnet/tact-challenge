@@ -57,33 +57,34 @@ contract Task4 with Deployable {
   }
 
   receive(msg: OwnershipAssigned) {
-    if(self.nft != null){
-      send(SendParameters{
-        to: sender(),
-        value: 0,
-        mode: SendRemainingValue,
-        body: Transfer {
-          queryId: msg.queryId,
-          newOwner: msg.prevOwner,
-          responseDestination: msg.prevOwner,
-          customPayload: null,
-          forwardAmount: 0,
-          forwardPayload: emptySlice()
-        }.toCell()
-      });
+    if(self.nft == null){
+      self.nft = context().sender;
+      self.owner = msg.prevOwner;
+      self.lockUntil = now() + msg.forwardPayload.loadUint(32);
       return;
     }
-    self.nft = sender();
-    self.owner = msg.prevOwner;
-    self.lockUntil = now() + msg.forwardPayload.loadUint(32);
+
+    send(SendParameters{
+      to: context().sender,
+      value: 0,
+      mode: SendRemainingValue,
+      body: Transfer {
+        queryId: 0,
+        newOwner: msg.prevOwner,
+        responseDestination: myAddress(),
+        customPayload: null,
+        forwardAmount: 0,
+        forwardPayload: emptySlice()
+      }.toCell()
+    });
   }
 
   receive(msg: NftWithdrawal) {
-    require(self.owner == sender(), "Invalid sender");
+    require(self.owner == context().sender, "Invalid sender");
     
     if(self.lockUntil > now()){
       send(SendParameters{
-        to: sender(),
+        to: self.owner!!,
         value: 0,
         mode: SendRemainingValue,
         body: "NFT is still locked".asComment()
@@ -91,28 +92,23 @@ contract Task4 with Deployable {
       return;
     }
 
-    if(self.nft != null) {
+    send(SendParameters{
+      to: msg.nftAddress,
+      value: 0,
+      mode: SendRemainingBalance,
+      body: Transfer {
+        queryId: 0,
+        newOwner: self.owner!!,
+        responseDestination: self.owner!!,
+        customPayload: null,
+        forwardAmount: 0,
+        forwardPayload: emptySlice()
+      }.toCell()
+    });
 
-      send(SendParameters{
-        to: msg.nftAddress,
-        value: 0,
-        mode: SendRemainingBalance,
-        body: Transfer {
-          queryId: msg.queryId,
-          newOwner: self.owner!!,
-          responseDestination: self.owner!!,
-          customPayload: null,
-          forwardAmount: 0,
-          forwardPayload: emptySlice()
-        }.toCell()
-      });
-
-      self.owner = null;
-      self.nft = null;
-      self.lockUntil = 0;
-
-      return;
-    } 
+    self.owner = null;
+    self.nft = null;
+    self.lockUntil = 0;
   }
 
   get fun time(): Int {
