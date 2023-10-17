@@ -88,13 +88,10 @@ contract Task4 with Deployable {
         mode: SendRemainingValue,
         body: "NFT is still locked".asComment()
       });
-      return;
-    }
-
-    if(self.nft != null) {
+    } else if(self.nft != null) {
 
       send(SendParameters{
-        to: msg.nftAddress,
+        to: self.nft!!,
         value: 0,
         mode: SendRemainingBalance,
         body: Transfer {
