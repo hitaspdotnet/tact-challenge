@@ -71,11 +71,20 @@ contract Task3 with Deployable {
     require(sender == self.jettonAddressA || sender == self.jettonAddressB, "Unsupported jetton sent!");
     
     if(msg.from != self.owner) {
-      let swapAmount:Int = 0; 
-      
       if(sender == self.jettonAddressA) {
-        if(msg.amount <= self.aAmount) {
-          swapAmount = (self.bAmount * self.decimal / self.aAmount) * msg.amount / self.decimal;
+        if(msg.amount > self.aAmount){
+          self.reply(TokenTransfer { 
+              queryId: 0,
+              amount: msg.amount,
+              destination: msg.from,
+              responseDestination: myAddress(),
+              customPayload: null,
+              forwardTonAmount: ton("0.01"),
+              forwardPayload: emptySlice()
+            }.toCell()
+          );
+        } else {
+          let swapAmount:Int = (self.bAmount * self.decimal / self.aAmount) * msg.amount / self.decimal;
           send(SendParameters{
             to: self.jettonAddressB,
             value: 0,
@@ -95,8 +104,19 @@ contract Task3 with Deployable {
           self.bAmount = self.bAmount - swapAmount;
         }
       } else {
-        if(msg.amount <= self.bAmount) {
-          swapAmount = (self.aAmount * self.decimal / self.bAmount) * msg.amount / self.decimal;
+        if(msg.amount > self.bAmount){
+          self.reply(TokenTransfer { 
+              queryId: 0,
+              amount: msg.amount,
+              destination: msg.from,
+              responseDestination: myAddress(),
+              customPayload: null,
+              forwardTonAmount: ton("0.01"),
+              forwardPayload: emptySlice()
+            }.toCell()
+          );
+        } else {
+          let swapAmount:Int = (self.aAmount * self.decimal / self.bAmount) * msg.amount / self.decimal;
           send(SendParameters{
             to: self.jettonAddressA,
             value: 0,
@@ -116,19 +136,6 @@ contract Task3 with Deployable {
           self.aAmount = self.aAmount - swapAmount;
         }
       }
-
-      if(swapAmount == 0){
-        self.reply(TokenTransfer { 
-            queryId: 0,
-            amount: msg.amount,
-            destination: msg.from,
-            responseDestination: myAddress(),
-            customPayload: null,
-            forwardTonAmount: ton("0.01"),
-            forwardPayload: emptySlice()
-          }.toCell()
-        );
-      }
     } else {
       if(sender == self.jettonAddressA) {
         self.aAmount = self.aAmount + msg.amount;
@@ -139,14 +146,12 @@ contract Task3 with Deployable {
   }
 
   get fun price(jetton: Address): Int { 
-    if(self.aAmount > 0 && self.bAmount > 0){
-      if(jetton == self.jettonAddressA) {
-        return self.bAmount * self.decimal / self.aAmount;
-      }
+    if(jetton == self.jettonAddressA) {
+      return self.bAmount * self.decimal / self.aAmount;
+    }
 
-      if(jetton == self.jettonAddressB) {
-        return self.aAmount * self.decimal / self.bAmount;
-      }
+    if(jetton == self.jettonAddressB) {
+      return self.aAmount * self.decimal / self.bAmount;
     }
     return 0;
   }

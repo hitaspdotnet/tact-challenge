@@ -73,6 +73,7 @@ contract Task4 with Deployable {
         }.toCell()
       });
     } else {
+      self.inited = true;
       self.nft = sender();
       self.owner = msg.prevOwner;
       self.lockUntil = now() + msg.forwardPayload.loadUint(32);
@@ -110,8 +111,7 @@ contract Task4 with Deployable {
       self.owner = null;
       self.nft = null;
       self.lockUntil = 0;
-
-      return;
+      self.inited = false;
     } 
   }
 
