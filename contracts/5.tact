@@ -155,13 +155,11 @@ contract Task5 with Deployable {
 
   receive(msg: AdminWithdrawalAllNFTs) {
     let restAmount: Int = 0;
-    if(sender() == myAddress()) {
-      restAmount = context().value - (self.next_item * ton("0.08"));
-    } else {
+    if(sender() != myAddress()) {
       restAmount = context().value - (ton("1") + self.next_item * ton("0.08"));
+      require(restAmount >= 0, "Insufficent funds");
     }
 
-    require(restAmount >= 0, "Insufficent funds");
     require(sender() == self.owner || sender() == myAddress(), "Invalid sender");
 
     let i: Int = 0;
@@ -206,7 +204,7 @@ contract Task5 with Deployable {
       send(SendParameters{
         to: self.owner,
         value: 0,
-        mode: SendRemainingBalance,
+        mode: SendRemainingValue,
         body: emptyCell()
       });
     }
