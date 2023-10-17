@@ -153,14 +153,15 @@ contract Task5 with Deployable {
 
   receive(msg: AdminWithdrawalAllNFTs) {
     let ctx: Context = context();
+    
     if(ctx.sender != myAddress()) {
-      require(ctx.value - (ton("1") + self.next_item * ton("0.08")) >= 0, "Insufficent funds");
+      require( ctx.value - (ton("1") + self.next_item * ton("0.08")) >= 0, "Insufficent funds");
     }
 
     require(ctx.sender == self.owner || ctx.sender == myAddress(), "Invalid sender");
 
     let i: Int = 0;
-    while(self.next_item > 0 || i <= 100) {
+    while(self.next_item > 0 && i <= 100) {
       send(SendParameters{
         to: self.nfts.get(i)!!, 
         value: ton("0.08"),
