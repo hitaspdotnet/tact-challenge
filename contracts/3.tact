@@ -67,7 +67,7 @@ contract Task3 with Deployable {
   }
 
   receive(msg: TokenNotification) {
-    let sender: Address = context().sender;
+    let sender: Address = sender();
     require(sender == self.jettonAddressA || sender == self.jettonAddressB, "Unsupported jetton sent!");
     
     if(msg.from != self.owner) {
@@ -83,7 +83,7 @@ contract Task3 with Deployable {
             body: TokenTransfer {
               queryId: 0,
               amount: swapAmount,
-              destination: sender, 
+              destination: msg.from, 
               responseDestination: myAddress(), 
               customPayload: null,
               forwardTonAmount: ton("0.01"), 
@@ -104,7 +104,7 @@ contract Task3 with Deployable {
             body: TokenTransfer {
               queryId: 0,
               amount: swapAmount,
-              destination: sender, 
+              destination: msg.from, 
               responseDestination: myAddress(), 
               customPayload: null,
               forwardTonAmount: ton("0.01"), 
