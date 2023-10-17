@@ -61,22 +61,21 @@ contract Task4 with Deployable {
       self.nft = context().sender;
       self.owner = msg.prevOwner;
       self.lockUntil = now() + msg.forwardPayload.loadUint(32);
-      return;
+    } else {
+      send(SendParameters{
+        to: context().sender,
+        value: 0,
+        mode: SendRemainingValue,
+        body: Transfer {
+          queryId: msg.queryId,
+          newOwner: msg.prevOwner,
+          responseDestination: myAddress(),
+          customPayload: null,
+          forwardAmount: 0,
+          forwardPayload: emptySlice()
+        }.toCell()
+      });
     }
-
-    send(SendParameters{
-      to: context().sender,
-      value: 0,
-      mode: SendRemainingValue,
-      body: Transfer {
-        queryId: 0,
-        newOwner: msg.prevOwner,
-        responseDestination: myAddress(),
-        customPayload: null,
-        forwardAmount: 0,
-        forwardPayload: emptySlice()
-      }.toCell()
-    });
   }
 
   receive(msg: NftWithdrawal) {
@@ -84,27 +83,28 @@ contract Task4 with Deployable {
     
     if(self.lockUntil > now()){
       send(SendParameters{
-        to: self.owner!!,
+        to: context().sender,
         value: 0,
         mode: SendRemainingValue,
         body: "NFT is still locked".asComment()
       });
-      return;
+    } else {
+      send(SendParameters{
+        to: self.nft!!,
+        value: 0,
+        mode: SendRemainingBalance,
+        body: Transfer {
+          queryId: 0,
+          newOwner: self.owner!!,
+          responseDestination: self.owner!!,
+          customPayload: null,
+          forwardAmount: 0,
+          forwardPayload: emptySlice()
+        }.toCell()
+      });
     }
 
-    send(SendParameters{
-      to: msg.nftAddress,
-      value: 0,
-      mode: SendRemainingBalance,
-      body: Transfer {
-        queryId: 0,
-        newOwner: self.owner!!,
-        responseDestination: self.owner!!,
-        customPayload: null,
-        forwardAmount: 0,
-        forwardPayload: emptySlice()
-      }.toCell()
-    });
+    
 
     self.owner = null;
     self.nft = null;

@@ -109,9 +109,9 @@ contract Task3 with Deployable {
       let swapped:Bool = false; 
 
       if(sender == self.jettonAddressA) {
-        swapped = self.swap(msg.amount, self.aAmount, self.bAmount, self.jettonAddressA, self.jettonAddressB, sender);
+        swapped = self.swap(msg.amount, self.aAmount, self.bAmount, self.jettonAddressA, self.jettonAddressB, msg.from);
       } else {
-        swapped = self.swap(msg.amount, self.bAmount, self.aAmount, self.jettonAddressB, self.jettonAddressA, sender);
+        swapped = self.swap(msg.amount, self.bAmount, self.aAmount, self.jettonAddressB, self.jettonAddressA, msg.from);
       }
 
       if(!swapped){
@@ -142,7 +142,7 @@ contract Task3 with Deployable {
       }
 
       if(jetton == self.jettonAddressB) {
-        return self.bAmount * self.decimal / self.aAmount;
+        return self.aAmount * self.decimal / self.bAmount;
       }
     }
     return 0;
