@@ -51,14 +51,13 @@ contract Task4 with Deployable {
   owner: Address? = null;
   nft: Address? = null;
   lockUntil: Int as uint32 = 0;
-  inited: Bool = false;
   
   init(seed: Int) {
     self.seed = seed; // needed to deploy multiple smart contracts copies from one admin address
   }
 
   receive(msg: OwnershipAssigned) {
-    if(self.inited){
+    if(self.nft != null){
       send(SendParameters{
         to: sender(),
         value: 0,
@@ -72,12 +71,11 @@ contract Task4 with Deployable {
           forwardPayload: emptySlice()
         }.toCell()
       });
-    } else {
-      self.inited = true;
-      self.nft = sender();
-      self.owner = msg.prevOwner;
-      self.lockUntil = now() + msg.forwardPayload.loadUint(32);
+      return;
     }
+    self.nft = sender();
+    self.owner = msg.prevOwner;
+    self.lockUntil = now() + msg.forwardPayload.loadUint(32);
   }
 
   receive(msg: NftWithdrawal) {
@@ -93,7 +91,8 @@ contract Task4 with Deployable {
       return;
     }
 
-    if(self.inited) {
+    if(self.nft != null) {
+
       send(SendParameters{
         to: msg.nftAddress,
         value: 0,
@@ -101,7 +100,7 @@ contract Task4 with Deployable {
         body: Transfer {
           queryId: msg.queryId,
           newOwner: self.owner!!,
-          responseDestination: myAddress(),
+          responseDestination: self.owner!!,
           customPayload: null,
           forwardAmount: 0,
           forwardPayload: emptySlice()
@@ -111,7 +110,6 @@ contract Task4 with Deployable {
       self.owner = null;
       self.nft = null;
       self.lockUntil = 0;
-      self.inited = false;
     } 
   }
 
