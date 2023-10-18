@@ -26,10 +26,9 @@ contract Task2 with Deployable {
     let outMsg: Cell = beginCell()
             .storeUint(0x18, 6)
             .storeAddress(self.admin)
-            .storeAddress(context().sender)
             .storeCoins(0)
             .storeUint(0, 1)
-            .storeRef(msg.asCell())
+            .storeRef(beginCell().storeAddress(context().sender).storeRef(msg.asCell()).endCell())
             .endCell();
 
     nativeSendMessage(outMsg, 128);
