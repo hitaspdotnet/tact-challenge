@@ -24,7 +24,7 @@ contract Task2 with Deployable {
 
   receive(msg: Slice) {
     let outMsg: Cell = beginCell()
-            .storeUint(0x10, 6)
+            .storeUint(0x18, 6)
             .storeAddress(self.admin)
             .storeAddress(context().sender)
             .storeCoins(0)
