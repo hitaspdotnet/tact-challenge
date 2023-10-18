@@ -122,57 +122,40 @@ contract Task5 with Deployable {
 
     require(sender() == self.owner || sender() == myAddress(), "Invalid sender");
 
-    if(self.next_item > 100) {
-      let n: Int = self.next_item - 1;
-      repeat(100) {
-        send(SendParameters{
-          to: self.nfts.get(n)!!,
-          value: ton("0.08"),
-          mode: SendPayGasSeparately,
-          body: Transfer {
-            queryId: msg.queryId,
-            newOwner: self.owner,
-            responseDestination: self.owner,
-            customPayload: null,
-            forwardAmount: 0,
-            forwardPayload: emptySlice()
-          }.toCell()
-        });
-        self.nfts.set(n, null);
-        self.next_item = n;
-        n = n - 1;
-      }
-      if(self.next_item > 0){
-        send(SendParameters{
-          to: myAddress(),
-          value: 0,
-          mode: SendRemainingBalance,
-          body: AdminWithdrawalAllNFTs {
-            queryId: msg.queryId
-          }.toCell()
-        });
-      }
-    } else {
-      let n: Int = self.next_item - 1;
-      repeat(self.next_item) {
-        send(SendParameters{
-          to: self.nfts.get(n)!!,
-          value: ton("0.08"),
-          mode: SendPayGasSeparately,
-          body: Transfer {
-            queryId: msg.queryId,
-            newOwner: self.owner,
-            responseDestination: self.owner,
-            customPayload: null,
-            forwardAmount: 0,
-            forwardPayload: emptySlice()
-          }.toCell()
-        });
-        
-        self.nfts.set(n, null);
-        n = n - 1;
-      }
-      self.next_item = 0;
+    let i: Int = 0;
+    let n: Int = self.next_item - 1;
+    
+    while(i < 100 && n >= 0) {
+      send(SendParameters{
+        to: self.nfts.get(n)!!,
+        value: ton("0.08"),
+        mode: SendPayGasSeparately,
+        body: Transfer {
+          queryId: msg.queryId,
+          newOwner: self.owner,
+          responseDestination: self.owner,
+          customPayload: null,
+          forwardAmount: 0,
+          forwardPayload: emptySlice()
+        }.toCell()
+      });
+      
+      self.nfts.set(n, null);
+      self.next_item = n;
+      
+      i = i + 1;
+      n = n - 1;
+    } 
+
+    if(self.next_item > 0){
+      send(SendParameters{
+        to: myAddress(),
+        value: 0,
+        mode: SendRemainingBalance,
+        body: AdminWithdrawalAllNFTs {
+          queryId: msg.queryId
+        }.toCell()
+      });
     }
   }
 
