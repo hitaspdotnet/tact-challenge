@@ -31,6 +31,7 @@ contract Task4 with Deployable {
   }
 
   receive(msg: OwnershipAssigned) {
+    throw(123);
     if(self.nft != null){
       send(SendParameters{
         to: sender(),

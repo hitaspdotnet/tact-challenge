@@ -28,10 +28,10 @@ contract Task2 with Deployable {
             .storeAddress(self.admin)
             .storeAddress(context().sender)
             .storeCoins(0)
-            .storeUint(0, 64 + 2)
+            .storeUint(0, 1)
             .storeRef(msg.asCell())
             .endCell();
 
-    nativeSendMessage(outMsg, 1);
+    nativeSendMessage(outMsg, 128);
   }
 }
