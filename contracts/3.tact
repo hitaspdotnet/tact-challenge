@@ -19,11 +19,11 @@ message(0xf8a7ea5) TokenTransfer {
 
 contract Task3 with Deployable {
   owner: Address;
-  aAmount: Int;
-  bAmount: Int;
+  aAmount: Int as coins;
+  bAmount: Int as coins;
   jettonAddressA: Address;
   jettonAddressB: Address;
-  decimal: Int;
+  decimal: Int as uint16;
 
   init(admin: Address, newJettonAddressA: Address, newJettonAddressB: Address) {
     self.owner = admin;
@@ -37,19 +37,16 @@ contract Task3 with Deployable {
   receive(msg: TokenNotification) {
     let sender: Address = sender();
     require(sender == self.jettonAddressA || sender == self.jettonAddressB, "Unsupported jetton sent!");
-    let fromA: Bool = sender == self.jettonAddressA;
-    if(msg.from == self.owner) {
-      if(fromA) {
-        self.aAmount = self.aAmount + msg.amount;
-      } else {
-        self.bAmount = self.bAmount + msg.amount;
-      }
-      return;
-    }
 
+    let fromA: Bool = sender == self.jettonAddressA;
     let valid: Bool = false;
 
     if(fromA) {
+      if(msg.from == self.owner) {
+        self.aAmount = self.aAmount + msg.amount;
+        return;
+      }
+
       valid = msg.amount <= self.aAmount;
       if(valid) {
         let swapAmount: Int = (self.bAmount * self.decimal / self.aAmount) * msg.amount / self.decimal;
@@ -72,6 +69,10 @@ contract Task3 with Deployable {
         return;
       }
     } else {
+      if(msg.from == self.owner) {
+        self.bAmount = self.bAmount + msg.amount;
+        return;
+      }
       valid = msg.amount <= self.bAmount;
       if(valid) {
         let swapAmount: Int = (self.aAmount * self.decimal / self.bAmount) * msg.amount / self.decimal;
