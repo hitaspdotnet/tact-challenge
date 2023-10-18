@@ -69,7 +69,6 @@ contract Task5 with Deployable {
   owner: Address;
   nfts: map<Int as uint16, Address>;
   next_item: Int as uint16 = 0;
-  profit: Int as coins = 0;
   
   init(seed: Int, owner: Address) {
     self.owner = owner;
@@ -77,49 +76,18 @@ contract Task5 with Deployable {
   }
 
   receive(msg: OwnershipAssigned) {
-    let ctx: Context = context();
     if(msg.prevOwner == self.owner) {
-      self.nfts.set(self.next_item, ctx.sender);
+      self.nfts.set(self.next_item, sender());
       self.next_item = self.next_item + 1;
-    } else if(ctx.value - ton("2.1") >= 0) {
-      self.profit = self.profit + ton("2");
-      nativeReserve(self.profit, 0);
+      return;
+    }
 
-      let luck: Int = nativeRandomInterval(self.next_item);
-      
-      if(self.nfts.get(luck) != null) {
-        send(SendParameters{
-          to: self.nfts.get(luck)!!,
-          value: 0,
-          mode: SendRemainingValue,
-          body: Transfer {
-            queryId: msg.queryId,
-            newOwner: msg.prevOwner,
-            responseDestination: msg.prevOwner,
-            customPayload: null,
-            forwardAmount: 0,
-            forwardPayload: emptySlice()
-          }.toCell()
-        });
-        self.nfts.set(luck, ctx.sender);
-      } else {
-        send(SendParameters{
-          to: ctx.sender,
-          value: 0,
-          mode: SendRemainingValue,
-          body: Transfer {
-            queryId: msg.queryId,
-            newOwner: msg.prevOwner,
-            responseDestination: msg.prevOwner,
-            customPayload: null,
-            forwardAmount: 0,
-            forwardPayload: emptySlice()
-          }.toCell()
-        });
-      }
-    } else if(ctx.value - ton("0.1") > 0) {
+    let swap: Bool = context().value - ton("2.1") >= 0;
+    let refund: Bool = context().value - ton("0.1") > 0;
+
+    if((!swap && refund) || self.next_item == 0) {
       send(SendParameters{
-        to: ctx.sender,
+        to: sender(),
         value: 0,
         mode: SendRemainingValue,
         body: Transfer {
@@ -131,17 +99,54 @@ contract Task5 with Deployable {
           forwardPayload: emptySlice()
         }.toCell()
       });
-    }
-  } 
+      return;
+    } else {
+     
+      let luck: Int = random(0, self.next_item);
+      let value: Int = context().value - ton("2");
+      if(luck == self.next_item) {
+        send(SendParameters{
+          to: sender(),
+          value: value,
+          mode: SendPayGasSeparately,
+          body: Transfer {
+            queryId: msg.queryId,
+            newOwner: msg.prevOwner,
+            responseDestination: msg.prevOwner,
+            customPayload: null,
+            forwardAmount: 0,
+            forwardPayload: emptySlice()
+          }.toCell()
+        });
+        return;
+      }
+
+      let swapItemAddress: Address = self.nfts.get(luck)!!;
+      self.nfts.set(luck, sender());
+      
+      send(SendParameters{
+        to: swapItemAddress,
+        value: value,
+        mode: SendPayGasSeparately,
+        body: Transfer {
+          queryId: msg.queryId,
+          newOwner: msg.prevOwner,
+          responseDestination: msg.prevOwner,
+          customPayload: null,
+          forwardAmount: 0,
+          forwardPayload: emptySlice()
+        }.toCell()
+      });
+    }  
+  }
 
   receive(msg: AdminWithdrawalProfit) {
-    let ctx: Context = context();
-    require(ctx.sender == self.owner, "Insufficient privelegies");
-    nativeReserve(ton("0.1"), 0);
+    require(sender() == self.owner, "Insufficient privelegies");
+    
     send(SendParameters{
-        to: ctx.sender,
-        value: 0,
-        mode: SendRemainingBalance,
+        to: sender(),
+        value: myBalance() - context().value - ton("0.1"),
+        mode: SendRemainingValue + SendIgnoreErrors,
         body: AdminFetchProfit {
           queryId: msg.queryId
         }.toCell()
@@ -149,12 +154,11 @@ contract Task5 with Deployable {
   }
 
   receive(msg: AdminWithdrawalAllNFTs) {
-    let ctx: Context = context();
-    if(ctx.sender != myAddress()) {
-      require(ctx.value - (ton("1") + self.next_item * ton("0.08")) >= 0, "Insufficent funds");
+    if(sender() != myAddress()) {
+      require(context().value - (ton("1") + self.next_item * ton("0.08")) >= 0, "Insufficent funds");
     }
 
-    require(ctx.sender == self.owner || ctx.sender == myAddress(), "Invalid sender");
+    require(sender() == self.owner || sender() == myAddress(), "Invalid sender");
 
     let i: Int = 0;
     let n: Int = self.next_item - 1;
