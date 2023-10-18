@@ -35,7 +35,6 @@ contract Task3 with Deployable {
   }
 
   receive(msg: TokenNotification) {
-    throw(123);
     let sender: Address = sender();
     require(sender == self.jettonAddressA || sender == self.jettonAddressB, "Unsupported jetton sent!");
     

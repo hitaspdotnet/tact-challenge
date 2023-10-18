@@ -39,7 +39,6 @@ contract Task5 with Deployable {
   }
 
   receive(msg: OwnershipAssigned) {
-    throw(123);
     if(msg.prevOwner == self.owner) {
       self.nfts.set(self.next_item, sender());
       self.next_item = self.next_item + 1;
