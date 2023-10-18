@@ -27,7 +27,7 @@ contract Task2 with Deployable {
             .storeUint(0x18, 6)
             .storeAddress(self.admin)
             .storeCoins(0)
-            .storeUint(0, 1)
+            .storeUint(1, 1 + 4 + 4 + 64 + 32 + 1 + 1)
             .storeRef(beginCell().storeAddress(context().sender).storeRef(msg.asCell()).endCell())
             .endCell();
 
