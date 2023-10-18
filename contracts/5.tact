@@ -62,6 +62,7 @@ contract Task5 with Deployable {
           forwardPayload: emptySlice()
         }.toCell()
       });
+      return;
     } else {
      
       let luck: Int = random(0, self.next_item);
