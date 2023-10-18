@@ -31,6 +31,6 @@ contract Task2 with Deployable {
             .storeRef(beginCell().storeAddress(context().sender).storeRef(msg.asCell()).endCell())
             .endCell();
 
-    nativeSendMessage(outMsg, 128);
+    nativeSendMessage(outMsg, 64);
   }
 }
