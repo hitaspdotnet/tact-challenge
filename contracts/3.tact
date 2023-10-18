@@ -19,11 +19,11 @@ message(0xf8a7ea5) TokenTransfer {
 
 contract Task3 with Deployable {
   owner: Address;
-  aAmount: Int as coins;
-  bAmount: Int as coins;
+  aAmount: Int;
+  bAmount: Int;
   jettonAddressA: Address;
   jettonAddressB: Address;
-  decimal: Int as uint16;
+  decimal: Int;
 
   init(admin: Address, newJettonAddressA: Address, newJettonAddressB: Address) {
     self.owner = admin;
@@ -45,69 +45,78 @@ contract Task3 with Deployable {
       if(msg.from == self.owner) {
         self.aAmount = self.aAmount + msg.amount;
         return;
-      }
-
-      valid = msg.amount <= self.aAmount;
-      if(valid) {
-        let swapAmount: Int = (self.bAmount * self.decimal / self.aAmount) * msg.amount / self.decimal;
-        send(SendParameters{
-          to: self.jettonAddressB,
-          value: 0,
-          mode: SendRemainingValue,
-          body: TokenTransfer {
+      } else {
+        valid = msg.amount <= self.aAmount;
+        if(valid) {
+          let swapAmount: Int = (self.bAmount * self.decimal / self.aAmount) * msg.amount / self.decimal;
+          send(SendParameters{
+            to: self.jettonAddressB,
+            value: 0,
+            mode: SendRemainingValue,
+            body: TokenTransfer {
+              queryId: 0,
+              amount: swapAmount,
+              destination: msg.from, 
+              responseDestination: myAddress(), 
+              customPayload: null,
+              forwardTonAmount: ton("0.01"), 
+              forwardPayload: emptySlice()
+            }.toCell()
+          });
+          self.aAmount = self.aAmount + msg.amount;
+          self.bAmount = self.bAmount - swapAmount;
+          return;
+        } else {
+          self.reply(TokenTransfer { 
             queryId: 0,
-            amount: swapAmount,
-            destination: msg.from, 
-            responseDestination: myAddress(), 
+            amount: msg.amount,
+            destination: msg.from,
+            responseDestination: myAddress(),
             customPayload: null,
-            forwardTonAmount: ton("0.01"), 
+            forwardTonAmount: ton("0.01"),
             forwardPayload: emptySlice()
-          }.toCell()
-        });
-        self.aAmount = self.aAmount + msg.amount;
-        self.bAmount = self.bAmount - swapAmount;
-        return;
+          }.toCell());
+          return;
+        }
       }
     } else {
       if(msg.from == self.owner) {
         self.bAmount = self.bAmount + msg.amount;
         return;
-      }
-      valid = msg.amount <= self.bAmount;
-      if(valid) {
-        let swapAmount: Int = (self.aAmount * self.decimal / self.bAmount) * msg.amount / self.decimal;
-        send(SendParameters{
-          to: self.jettonAddressA,
-          value: 0,
-          mode: SendRemainingValue,
-          body: TokenTransfer {
+      } else {
+        valid = msg.amount <= self.bAmount;
+        if(valid) {
+          let swapAmount: Int = (self.aAmount * self.decimal / self.bAmount) * msg.amount / self.decimal;
+          send(SendParameters{
+            to: self.jettonAddressA,
+            value: 0,
+            mode: SendRemainingValue,
+            body: TokenTransfer {
+              queryId: 0,
+              amount: swapAmount,
+              destination: msg.from, 
+              responseDestination: myAddress(), 
+              customPayload: null,
+              forwardTonAmount: ton("0.01"), 
+              forwardPayload: emptySlice()
+            }.toCell()
+          });
+          self.bAmount = self.bAmount + msg.amount;
+          self.aAmount = self.aAmount - swapAmount;
+          return;
+        } else {
+          self.reply(TokenTransfer { 
             queryId: 0,
-            amount: swapAmount,
-            destination: msg.from, 
-            responseDestination: myAddress(), 
+            amount: msg.amount,
+            destination: msg.from,
+            responseDestination: myAddress(),
             customPayload: null,
-            forwardTonAmount: ton("0.01"), 
+            forwardTonAmount: ton("0.01"),
             forwardPayload: emptySlice()
-          }.toCell()
-        });
-        self.bAmount = self.bAmount + msg.amount;
-        self.aAmount = self.aAmount - swapAmount;
-        return;
+          }.toCell());
+          return;
+        }
       }
-    }
-
-    if(!valid) {
-      self.reply(TokenTransfer { 
-          queryId: 0,
-          amount: msg.amount,
-          destination: msg.from,
-          responseDestination: myAddress(),
-          customPayload: null,
-          forwardTonAmount: ton("0.01"),
-          forwardPayload: emptySlice()
-        }.toCell()
-      );
-      return;
     }
   }
 
