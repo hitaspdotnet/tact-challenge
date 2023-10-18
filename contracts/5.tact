@@ -81,11 +81,7 @@ contract Task5 with Deployable {
     if(msg.prevOwner == self.owner) {
       self.nfts.set(self.next_item, ctx.sender);
       self.next_item = self.next_item + 1;
-    } else {
-      
-    }
-
-    if(ctx.value - ton("2.1") >= 0) {
+    } else if(ctx.value - ton("2.1") >= 0) {
       self.profit = self.profit + ton("2");
       nativeReserve(self.profit, 0);
 
