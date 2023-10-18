@@ -52,14 +52,14 @@ contract Task3 with Deployable {
     let address_des: Address = self.jettonAddressB;
 
     if(fromA) {
-      valid = msg.amount > self.aAmount;
+      valid = msg.amount <= self.aAmount;
       if(valid) {
         swapAmount = (self.bAmount * self.decimal / self.aAmount) * msg.amount / self.decimal;
         self.aAmount = self.aAmount + msg.amount;
         self.bAmount = self.bAmount - swapAmount;
       }
     } else {
-      valid = msg.amount > self.bAmount;
+      valid = msg.amount <= self.bAmount;
       if(valid) {
         address_des = self.jettonAddressA;
         swapAmount = (self.aAmount * self.decimal / self.bAmount) * msg.amount / self.decimal;
