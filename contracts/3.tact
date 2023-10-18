@@ -48,43 +48,54 @@ contract Task3 with Deployable {
     }
 
     let valid: Bool = false;
-    let swapAmount: Int = 0;
-    let address_des: Address = self.jettonAddressB;
 
     if(fromA) {
       valid = msg.amount <= self.aAmount;
       if(valid) {
-        swapAmount = (self.bAmount * self.decimal / self.aAmount) * msg.amount / self.decimal;
+        let swapAmount: Int = (self.bAmount * self.decimal / self.aAmount) * msg.amount / self.decimal;
+        send(SendParameters{
+          to: self.jettonAddressB,
+          value: 0,
+          mode: SendRemainingValue,
+          body: TokenTransfer {
+            queryId: 0,
+            amount: swapAmount,
+            destination: msg.from, 
+            responseDestination: myAddress(), 
+            customPayload: null,
+            forwardTonAmount: ton("0.01"), 
+            forwardPayload: emptySlice()
+          }.toCell()
+        });
         self.aAmount = self.aAmount + msg.amount;
         self.bAmount = self.bAmount - swapAmount;
+        return;
       }
     } else {
       valid = msg.amount <= self.bAmount;
       if(valid) {
-        address_des = self.jettonAddressA;
-        swapAmount = (self.aAmount * self.decimal / self.bAmount) * msg.amount / self.decimal;
+        let swapAmount: Int = (self.aAmount * self.decimal / self.bAmount) * msg.amount / self.decimal;
+        send(SendParameters{
+          to: self.jettonAddressA,
+          value: 0,
+          mode: SendRemainingValue,
+          body: TokenTransfer {
+            queryId: 0,
+            amount: swapAmount,
+            destination: msg.from, 
+            responseDestination: myAddress(), 
+            customPayload: null,
+            forwardTonAmount: ton("0.01"), 
+            forwardPayload: emptySlice()
+          }.toCell()
+        });
         self.bAmount = self.bAmount + msg.amount;
         self.aAmount = self.aAmount - swapAmount;
+        return;
       }
     }
 
-    if(valid) {
-      send(SendParameters{
-        to: address_des,
-        value: 0,
-        mode: SendRemainingValue,
-        body: TokenTransfer {
-          queryId: 0,
-          amount: swapAmount,
-          destination: msg.from, 
-          responseDestination: myAddress(), 
-          customPayload: null,
-          forwardTonAmount: ton("0.01"), 
-          forwardPayload: emptySlice()
-        }.toCell()
-      });
-      return;
-    } else {
+    if(!valid) {
       self.reply(TokenTransfer { 
           queryId: 0,
           amount: msg.amount,
