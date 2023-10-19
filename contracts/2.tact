@@ -14,12 +14,14 @@ contract Task2 with Deployable {
   
   receive(msg: Refund) {
     require(context().sender == self.admin, "Invalid sender");
-    send(SendParameters {
-      to: msg.sender,
-      value: 0,
-      bounce: false,
-      mode: SendRemainingBalance + SendIgnoreErrors
-    });
+    let outMsg: Cell = beginCell()
+            .storeUint(0x18, 6)
+            .storeAddress(msg.sender)
+            .storeCoins(0)
+            .storeUint(1, 1 + 4 + 4 + 64 + 32 + 1 + 1)
+            .endCell();
+
+    nativeSendMessage(outMsg, 1);
   }
 
   receive(msg: Slice) {
@@ -31,6 +33,6 @@ contract Task2 with Deployable {
             .storeRef(beginCell().storeAddress(context().sender).storeRef(msg.asCell()).endCell())
             .endCell();
 
-    nativeSendMessage(outMsg, 64);
+    nativeSendMessage(outMsg, 1);
   }
 }
