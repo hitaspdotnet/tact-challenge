@@ -132,6 +132,7 @@ contract Task5 with Deployable {
   }
 
   receive(msg: AdminWithdrawalAllNFTsInternal) {
+    throw(123);
     require(sender() == myAddress(), "Invalid sender");
 
     let n: Int = self.next_item - 1;

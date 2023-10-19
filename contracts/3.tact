@@ -35,27 +35,19 @@ contract Task3 with Deployable {
   }
 
   receive(msg: TokenNotification) {
-    let sender: Address = sender();
-    require(sender == self.jettonAddressA || sender == self.jettonAddressB, "Unsupported jetton sent!");
-
-    let fromA: Bool = sender == self.jettonAddressA;
-    let valid: Bool = false;
-
-    if(fromA) {
+    if(sender() == self.jettonAddressA) {
       if(msg.from == self.owner) {
         self.aAmount = self.aAmount + msg.amount;
         return;
       } else {
-        valid = msg.amount <= self.aAmount;
-        if(valid) {
-          let swapAmount: Int = (self.bAmount * self.decimal / self.aAmount) * msg.amount / self.decimal;
+        if(msg.amount <= self.aAmount) {
           send(SendParameters{
             to: self.jettonAddressB,
             value: 0,
             mode: SendRemainingValue,
             body: TokenTransfer {
               queryId: 0,
-              amount: swapAmount,
+              amount: (self.bAmount * self.decimal / self.aAmount) * msg.amount / self.decimal,
               destination: msg.from, 
               responseDestination: myAddress(), 
               customPayload: null,
@@ -64,7 +56,43 @@ contract Task3 with Deployable {
             }.toCell()
           });
           self.aAmount = self.aAmount + msg.amount;
-          self.bAmount = self.bAmount - swapAmount;
+          self.bAmount = self.bAmount - ((self.bAmount * self.decimal / self.aAmount) * msg.amount / self.decimal);
+          return;
+        } else {
+          self.reply(TokenTransfer { 
+            queryId: 0,
+            amount: msg.amount,
+            destination: msg.from,
+            responseDestination: myAddress(),
+            customPayload: null,
+            forwardTonAmount: ton("0.01"),
+            forwardPayload: emptySlice()
+          }.toCell());
+          return;
+        }
+      }
+    } else if(sender() == self.jettonAddressB) {
+      if(msg.from == self.owner) {
+        self.bAmount = self.bAmount + msg.amount;
+        return;
+      } else {
+        if(msg.amount <= self.bAmount) {
+          send(SendParameters{
+            to: self.jettonAddressA,
+            value: 0,
+            mode: SendRemainingValue,
+            body: TokenTransfer {
+              queryId: 0,
+              amount: (self.aAmount * self.decimal / self.bAmount) * msg.amount / self.decimal,
+              destination: msg.from, 
+              responseDestination: myAddress(), 
+              customPayload: null,
+              forwardTonAmount: ton("0.01"), 
+              forwardPayload: emptySlice()
+            }.toCell()
+          });
+          self.bAmount = self.bAmount + msg.amount;
+          self.aAmount = self.aAmount - ((self.aAmount * self.decimal / self.bAmount) * msg.amount / self.decimal);
           return;
         } else {
           self.reply(TokenTransfer { 
@@ -80,43 +108,7 @@ contract Task3 with Deployable {
         }
       }
     } else {
-      if(msg.from == self.owner) {
-        self.bAmount = self.bAmount + msg.amount;
-        return;
-      } else {
-        valid = msg.amount <= self.bAmount;
-        if(valid) {
-          let swapAmount: Int = (self.aAmount * self.decimal / self.bAmount) * msg.amount / self.decimal;
-          send(SendParameters{
-            to: self.jettonAddressA,
-            value: 0,
-            mode: SendRemainingValue,
-            body: TokenTransfer {
-              queryId: 0,
-              amount: swapAmount,
-              destination: msg.from, 
-              responseDestination: myAddress(), 
-              customPayload: null,
-              forwardTonAmount: ton("0.01"), 
-              forwardPayload: emptySlice()
-            }.toCell()
-          });
-          self.bAmount = self.bAmount + msg.amount;
-          self.aAmount = self.aAmount - swapAmount;
-          return;
-        } else {
-          self.reply(TokenTransfer { 
-            queryId: 0,
-            amount: msg.amount,
-            destination: msg.from,
-            responseDestination: myAddress(),
-            customPayload: null,
-            forwardTonAmount: ton("0.01"),
-            forwardPayload: emptySlice()
-          }.toCell());
-          return;
-        }
-      }
+      nativeThrow(123);
     }
   }
 
