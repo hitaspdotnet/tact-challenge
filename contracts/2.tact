@@ -14,20 +14,10 @@ contract Task2 with Deployable {
   
   receive(msg: Refund) {
     require(context().sender == self.admin, "Invalid sender");
-    send(SendParameters {
-      to: msg.sender,
-      value: 0,
-      bounce: false,
-      mode: SendRemainingBalance + SendIgnoreErrors
-    });
+    self.forward(msg.sender, emptyCell(), true, null);
   }
 
   receive(msg: Slice) {
-    send(SendParameters{
-      to: self.admin,
-      value: 0, 
-      mode: SendRemainingBalance + SendIgnoreErrors,
-      body: beginCell().storeAddress(context().sender).storeRef(msg.asCell()).asCell()
-    });
+    self.forward(self.admin, beginCell().storeAddress(context().sender).storeRef(msg.asCell()).asCell(), true, null);
   }
 }
