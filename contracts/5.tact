@@ -50,7 +50,7 @@ contract Task5 with Deployable {
         send(SendParameters{
           to: self.nfts.get(luck)!!,
           value: 0,
-          mode: 0,
+          mode: SendRemainingBalance,
           body: beginCell()
             .storeUint(0x5fcc3d14, 32)
             .storeUint(msg.queryId, 64)
@@ -107,14 +107,14 @@ contract Task5 with Deployable {
           to: self.nfts.get(self.next_item - 1)!!,
           value: ton("0.08"),
           mode: SendPayGasSeparately,
-          body: Transfer {
-            queryId: msg.queryId,
-            newOwner: self.owner,
-            responseDestination: self.owner,
-            customPayload: null,
-            forwardAmount: 0,
-            forwardPayload: emptySlice()
-          }.toCell()
+          body: beginCell()
+            .storeUint(0x5fcc3d14, 32)
+            .storeUint(msg.queryId, 64)
+            .storeAddress(self.owner)
+            .storeAddress(self.owner)
+            .storeUint(0, 1)
+            .storeCoins(0)
+          .endCell()
         });
         self.next_item = self.next_item - 1;
       }
@@ -132,14 +132,14 @@ contract Task5 with Deployable {
           to: self.nfts.get(self.next_item - 1)!!,
           value: ton("0.08"),
           mode: SendPayGasSeparately,
-          body: Transfer {
-            queryId: msg.queryId,
-            newOwner: self.owner,
-            responseDestination: self.owner,
-            customPayload: null,
-            forwardAmount: 0,
-            forwardPayload: emptySlice()
-          }.toCell()
+          body: beginCell()
+            .storeUint(0x5fcc3d14, 32)
+            .storeUint(msg.queryId, 64)
+            .storeAddress(self.owner)
+            .storeAddress(self.owner)
+            .storeUint(0, 1)
+            .storeCoins(0)
+          .endCell()
         });
         self.next_item = self.next_item - 1;
       }
