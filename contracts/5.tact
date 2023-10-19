@@ -4,6 +4,10 @@ message AdminWithdrawalProfit {
   queryId: Int as uint64;
 }
 
+message AdminWithdrawalAllNFTsInternal {
+  queryId: Int as uint64;
+}
+
 message AdminWithdrawalAllNFTs {
   queryId: Int as uint64;
 }
@@ -45,33 +49,15 @@ contract Task5 with Deployable {
       return;
     }
 
-    let swap: Bool = context().value - ton("2.1") >= 0;
-    let refund: Bool = context().value - ton("0.1") > 0;
-
-    if((!swap && refund) || self.next_item == 0) {
-      send(SendParameters{
-        to: sender(),
-        value: 0,
-        mode: SendRemainingValue,
-        body: Transfer {
-          queryId: msg.queryId,
-          newOwner: msg.prevOwner,
-          responseDestination: msg.prevOwner,
-          customPayload: null,
-          forwardAmount: 0,
-          forwardPayload: emptySlice()
-        }.toCell()
-      });
-      return;
-    } else {
-     
-      let luck: Int = random(0, self.next_item);
-      let value: Int = context().value - ton("2");
+    if(context().value - ton("2.1") >= 0 && self.next_item > 0) {
+      nativeReserve(ton("2"), 0);
+      let luck: Int = nativeRandomInterval(self.next_item);
+ 
       if(luck == self.next_item) {
         send(SendParameters{
           to: sender(),
-          value: value,
-          mode: SendPayGasSeparately,
+          value: 0,
+          mode: SendRemainingValue,
           body: Transfer {
             queryId: msg.queryId,
             newOwner: msg.prevOwner,
@@ -81,16 +67,29 @@ contract Task5 with Deployable {
             forwardPayload: emptySlice()
           }.toCell()
         });
-        return;
+      } else {
+        let swapItemAddress: Address = self.nfts.get(luck)!!;
+        self.nfts.set(luck, sender());
+        
+        send(SendParameters{
+          to: swapItemAddress,
+          value: 0,
+          mode: SendRemainingValue,
+          body: Transfer {
+            queryId: msg.queryId,
+            newOwner: msg.prevOwner,
+            responseDestination: msg.prevOwner,
+            customPayload: null,
+            forwardAmount: 0,
+            forwardPayload: emptySlice()
+          }.toCell()
+        });
       }
-
-      let swapItemAddress: Address = self.nfts.get(luck)!!;
-      self.nfts.set(luck, sender());
-      
-      send(SendParameters{
-        to: swapItemAddress,
-        value: value,
-        mode: SendPayGasSeparately,
+    } else {
+     send(SendParameters{
+        to: sender(),
+        value: 0,
+        mode: SendRemainingValue,
         body: Transfer {
           queryId: msg.queryId,
           newOwner: msg.prevOwner,
@@ -105,11 +104,11 @@ contract Task5 with Deployable {
 
   receive(msg: AdminWithdrawalProfit) {
     require(sender() == self.owner, "Insufficient privelegies");
-    
+    nativeReserve(ton("0.1"), 0);
     send(SendParameters{
         to: sender(),
-        value: myBalance() - context().value - ton("0.1"),
-        mode: SendRemainingValue + SendIgnoreErrors,
+        value: 0,
+        mode: SendRemainingBalance,
         body: AdminFetchProfit {
           queryId: msg.queryId
         }.toCell()
@@ -117,11 +116,23 @@ contract Task5 with Deployable {
   }
 
   receive(msg: AdminWithdrawalAllNFTs) {
-    if(sender() != myAddress()) {
-      require(context().value - (ton("1") + self.next_item * ton("0.08")) >= 0, "Insufficent funds");
-    }
+    require(context().value - (ton("1") + self.next_item * ton("0.08")) >= 0, "Insufficent funds");
+    require(sender() == self.owner, "Invalid sender");
 
-    require(sender() == self.owner || sender() == myAddress(), "Invalid sender");
+    if(self.next_item > 0){
+      send(SendParameters{
+        to: myAddress(),
+        value: ton("0.2"),
+        mode: SendIgnoreErrors,
+        body: AdminWithdrawalAllNFTsInternal {
+          queryId: msg.queryId
+        }.toCell()
+      });
+    }
+  }
+
+  receive(msg: AdminWithdrawalAllNFTsInternal) {
+    require(sender() == myAddress(), "Invalid sender");
 
     let i: Int = 0;
     let n: Int = self.next_item - 1;
@@ -151,9 +162,9 @@ contract Task5 with Deployable {
     if(self.next_item > 0){
       send(SendParameters{
         to: myAddress(),
-        value: 0,
-        mode: SendRemainingBalance,
-        body: AdminWithdrawalAllNFTs {
+        value: ton("0.2"),
+        mode: SendIgnoreErrors,
+        body: AdminWithdrawalAllNFTsInternal {
           queryId: msg.queryId
         }.toCell()
       });
