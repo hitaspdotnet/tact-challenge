@@ -122,8 +122,6 @@ contract Task5 with Deployable {
             forwardPayload: emptySlice()
           }.toCell()
         });
-        
-        self.nfts.set(self.next_item - 1, null);
         self.next_item = self.next_item - 1;
       }
       send(SendParameters{
@@ -149,10 +147,9 @@ contract Task5 with Deployable {
             forwardPayload: emptySlice()
           }.toCell()
         });
-        
-        self.nfts.set(self.next_item - 1, null);
         self.next_item = self.next_item - 1;
       }
+      self.nfts = emptyMap();
     }
   }
 
