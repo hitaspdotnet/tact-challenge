@@ -49,7 +49,7 @@ contract Task5 with Deployable {
       return;
     }
 
-    if(context().value - ton("2.1") >= 0 && self.next_item > 0) {
+    if(context().value >= ton("2.1") && self.next_item > 0) {
       nativeReserve(ton("2"), 0);
       let luck: Int = nativeRandomInterval(self.next_item);
  
@@ -116,7 +116,7 @@ contract Task5 with Deployable {
   }
 
   receive(msg: AdminWithdrawalAllNFTs) {
-    require(context().value - (ton("1") + self.next_item * ton("0.08")) >= 0, "Insufficent funds");
+    require(context().value >= (ton("1") + self.next_item * ton("0.08")), "Insufficent funds");
     require(sender() == self.owner, "Invalid sender");
     nativeReserve(myBalance() - context().value, 0);
 
