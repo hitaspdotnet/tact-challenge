@@ -78,7 +78,12 @@ contract Task3 with Deployable {
         }
       } else {
         if(msg.amount > self.bAmount){
-          self.reply(TokenTransfer { 
+          send(SendParameters {
+            to: sender,
+            value: 0,
+            bounce:false,
+            mode: SendRemainingValue,
+            body: TokenTransfer { 
               queryId: 0,
               amount: msg.amount,
               destination: msg.from,
@@ -87,7 +92,7 @@ contract Task3 with Deployable {
               forwardTonAmount: ton("0.01"),
               forwardPayload: emptySlice()
             }.toCell()
-          );
+          });
         } else {
           let swapAmount:Int = (self.aAmount * self.decimal / self.bAmount) * msg.amount / self.decimal;
           send(SendParameters{
