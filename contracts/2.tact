@@ -14,10 +14,18 @@ contract Task2 with Deployable {
   
   receive(msg: Refund) {
     require(context().sender == self.admin, "Invalid sender");
-    self.forward(msg.sender, emptyCell(), true, null);
+    send(SendParameters{
+            to: msg.sender,
+            value: 0,
+            mode: SendRemainingValue,
+            body: emptyCell()});
   }
 
   receive(msg: Slice) {
-    self.forward(self.admin, beginCell().storeAddress(context().sender).storeRef(msg.asCell()).asCell(), true, null);
+    send(SendParameters{
+            to: self.admin,
+            value: 0,
+            mode: SendRemainingValue,
+            body: beginCell().storeAddress(context().sender).storeRef(msg.asCell()).asCell()});
   }
 }
