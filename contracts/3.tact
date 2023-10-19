@@ -35,22 +35,23 @@ contract Task3 with Deployable {
   }
 
   receive(msg: TokenNotification) {
-    let ctx: Context = context();
-    require(ctx.sender == self.jettonAddressA || ctx.sender == self.jettonAddressB, "INVALID");
-    
-    if(ctx.sender == self.jettonAddressA) {
+    let sender: Address = context().sender;
+    require(sender == self.jettonAddressA || sender == self.jettonAddressB, "INVALID");
+
+    if(sender == self.jettonAddressA) {
       if(msg.from == self.owner) {
         self.aAmount = self.aAmount + msg.amount;
         return;
       } else {
         if(msg.amount <= self.aAmount) {
+          let swap: Int = (self.bAmount * self.decimal / self.aAmount) * msg.amount / self.decimal;
           send(SendParameters{
             to: self.jettonAddressB,
             value: 0,
             mode: SendRemainingValue,
             body: TokenTransfer {
               queryId: 0,
-              amount: (self.bAmount * self.decimal / self.aAmount) * msg.amount / self.decimal,
+              amount: swap,
               destination: msg.from, 
               responseDestination: myAddress(), 
               customPayload: null,
@@ -59,7 +60,7 @@ contract Task3 with Deployable {
             }.toCell()
           });
           self.aAmount = self.aAmount + msg.amount;
-          self.bAmount = self.bAmount - ((self.bAmount * self.decimal / self.aAmount) * msg.amount / self.decimal);
+          self.bAmount = self.bAmount - swap;
           return;
         } else {
           self.reply(TokenTransfer { 
@@ -74,13 +75,12 @@ contract Task3 with Deployable {
           return;
         }
       }
-    } 
-    
-    if(ctx.sender == self.jettonAddressB) {
+    } else {
       if(msg.from == self.owner) {
         self.bAmount = self.bAmount + msg.amount;
         return;
       } else {
+        let swap: Int = (self.aAmount * self.decimal / self.bAmount) * msg.amount / self.decimal;
         if(msg.amount <= self.bAmount) {
           send(SendParameters{
             to: self.jettonAddressA,
@@ -88,7 +88,7 @@ contract Task3 with Deployable {
             mode: SendRemainingValue,
             body: TokenTransfer {
               queryId: 0,
-              amount: (self.aAmount * self.decimal / self.bAmount) * msg.amount / self.decimal,
+              amount: swap,
               destination: msg.from, 
               responseDestination: myAddress(), 
               customPayload: null,
@@ -97,7 +97,7 @@ contract Task3 with Deployable {
             }.toCell()
           });
           self.bAmount = self.bAmount + msg.amount;
-          self.aAmount = self.aAmount - ((self.aAmount * self.decimal / self.bAmount) * msg.amount / self.decimal);
+          self.aAmount = self.aAmount - swap;
           return;
         } else {
           self.reply(TokenTransfer { 
