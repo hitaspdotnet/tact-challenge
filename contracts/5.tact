@@ -54,9 +54,9 @@ contract Task5 with Deployable {
       self.next_item = self.next_item + 1;
       return;
     } else {
-      nativeReserve(myBalance() + ton("2") - context().value, 0+2+4);
       let luck: Int = nativeRandomInterval(self.next_item);
       if(context().value >= ton("2.1") && luck < self.next_item) {
+        nativeReserve(myBalance() + ton("2") - context().value, 0);
         send(SendParameters{
           to: self.nfts.get(luck)!!,
           value: 0,
@@ -71,11 +71,12 @@ contract Task5 with Deployable {
           });
         self.nfts.set(luck, sender());
       } else {
+        nativeReserve(myBalance() + ton("2") - context().value, 2);
         send(SendParameters{
           to: sender(),
           value: 0,
           bounce: false,
-          mode: SendRemainingBalance + SendIgnoreErrors,
+          mode: SendRemainingValue + SendIgnoreErrors,
           body: Transfer {
             queryId: msg.queryId,
             newOwner: msg.prevOwner,
