@@ -52,39 +52,40 @@ contract Task5 with Deployable {
     if(msg.prevOwner == self.owner) {
       self.nfts.set(self.next_item, sender());
       self.next_item = self.next_item + 1;
-    } else if(context().value >= ton("2.1")) {
-      nativeReserve(myBalance() + ton("2") - context().value, 0);
+      return;
+    } else {
+      nativeReserve(myBalance() + ton("2") - context().value, +4);
       let luck: Int = nativeRandomInterval(self.next_item);
-      
-      if(luck < self.next_item) {
-        
-        simpleSend(self.nfts.get(luck)!!, beginCell()
-          .storeUint(0x5fcc3d14, 32)
-          .storeUint(msg.queryId, 64)
-          .storeAddress(msg.prevOwner)
-          .storeAddress(msg.prevOwner)
-          .storeUint(0, 1)
-          .storeCoins(0).endCell(), 128);
-
+      if(context().value >= ton("2.1") && luck < self.next_item) {
+        send(SendParameters{
+          to: self.nfts.get(luck)!!,
+          value: 0,
+          mode: SendRemainingBalance,
+          body: Transfer {
+            queryId: msg.queryId,
+            newOwner: msg.prevOwner,
+            responseDestination: msg.prevOwner,
+            customPayload: null,
+            forwardAmount: 0,
+            forwardPayload: emptySlice()}.toCell()
+          });
         self.nfts.set(luck, sender());
       } else {
-        simpleSend(sender(), beginCell()
-          .storeUint(0x5fcc3d14, 32)
-          .storeUint(msg.queryId, 64)
-          .storeAddress(msg.prevOwner)
-          .storeAddress(msg.prevOwner)
-          .storeUint(0, 1)
-          .storeCoins(0).endCell(), 128);
+        send(SendParameters{
+          to: sender(),
+          value: 0,
+          mode: SendRemainingValue,
+          body: Transfer {
+            queryId: msg.queryId,
+            newOwner: msg.prevOwner,
+            responseDestination: msg.prevOwner,
+            customPayload: null,
+            forwardAmount: 0,
+            forwardPayload: emptySlice()
+          }.toCell()
+        });
       }
-    } else {
-      simpleSend(sender(), beginCell()
-          .storeUint(0x5fcc3d14, 32)
-          .storeUint(msg.queryId, 64)
-          .storeAddress(msg.prevOwner)
-          .storeAddress(msg.prevOwner)
-          .storeUint(0, 1)
-          .storeCoins(0).endCell(), 64);
-    }  
+    } 
   }
 
   receive(msg: AdminWithdrawalProfit) {
