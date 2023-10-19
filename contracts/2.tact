@@ -17,8 +17,7 @@ contract Task2 with Deployable {
     send(SendParameters{
             to: msg.sender,
             value: 0,
-            mode: SendRemainingValue,
-            body: emptyCell()});
+            mode: SendRemainingValue});
   }
 
   receive(msg: Slice) {
