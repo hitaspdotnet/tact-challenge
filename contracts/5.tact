@@ -44,7 +44,7 @@ contract Task5 with Deployable {
       self.next_item = self.next_item + 1;
     } else if(context().value >= ton("2.1")) {
       nativeReserve(myBalance() + ton("2") - context().value, 0);
-      let luck: Int = random(0, self.next_item);
+      let luck: Int = nativeRandomInterval(self.next_item);
       
       if(luck < self.next_item) {
         send(SendParameters{
