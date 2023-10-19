@@ -106,33 +106,26 @@ contract Task5 with Deployable {
     }
 
     require(sender() == self.owner || sender() == myAddress(), "Invalid sender");
-
-    let i: Int = 0;
-    let n: Int = self.next_item - 1;
     
-    while(i < 100 && n >= 0) {
-      send(SendParameters{
-        to: self.nfts.get(n)!!,
-        value: ton("0.08"),
-        mode: SendPayGasSeparately,
-        body: Transfer {
-          queryId: msg.queryId,
-          newOwner: self.owner,
-          responseDestination: self.owner,
-          customPayload: null,
-          forwardAmount: 0,
-          forwardPayload: emptySlice()
-        }.toCell()
-      });
-      
-      self.nfts.set(n, null);
-      self.next_item = n;
-      
-      i = i + 1;
-      n = n - 1;
-    } 
-
-    if(self.next_item > 0){
+    if(self.next_item >= 100) {
+      repeat(100) {
+        send(SendParameters{
+          to: self.nfts.get(self.next_item - 1)!!,
+          value: ton("0.08"),
+          mode: SendPayGasSeparately,
+          body: Transfer {
+            queryId: msg.queryId,
+            newOwner: self.owner,
+            responseDestination: self.owner,
+            customPayload: null,
+            forwardAmount: 0,
+            forwardPayload: emptySlice()
+          }.toCell()
+        });
+        
+        self.nfts.set(self.next_item - 1, null);
+        self.next_item = self.next_item - 1;
+      }
       send(SendParameters{
         to: myAddress(),
         value: 0,
@@ -141,6 +134,25 @@ contract Task5 with Deployable {
           queryId: msg.queryId
         }.toCell()
       });
+    } else {
+      repeat(self.next_item) {
+        send(SendParameters{
+          to: self.nfts.get(self.next_item - 1)!!,
+          value: ton("0.08"),
+          mode: SendPayGasSeparately,
+          body: Transfer {
+            queryId: msg.queryId,
+            newOwner: self.owner,
+            responseDestination: self.owner,
+            customPayload: null,
+            forwardAmount: 0,
+            forwardPayload: emptySlice()
+          }.toCell()
+        });
+        
+        self.nfts.set(self.next_item - 1, null);
+        self.next_item = self.next_item - 1;
+      }
     }
   }
 
