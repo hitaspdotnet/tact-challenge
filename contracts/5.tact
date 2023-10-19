@@ -8,6 +8,10 @@ message AdminWithdrawalAllNFTs {
   queryId: Int as uint64;
 }
 
+message WithdrawalAllNFTsInternal {
+  queryId: Int as uint64;
+}
+
 message AdminFetchProfit {
   queryId: Int as uint64;
 }
@@ -51,15 +55,15 @@ contract Task5 with Deployable {
           to: self.nfts.get(luck)!!,
           value: 0,
           mode: SendRemainingBalance,
-          body: Transfer {
-            queryId: msg.queryId,
-            newOwner: msg.prevOwner,
-            responseDestination: msg.prevOwner,
-            customPayload: null,
-            forwardAmount: 0,
-            forwardPayload: emptySlice()
-          }.toCell()
-          });
+          body: beginCell()
+            .storeUint(0x5fcc3d14, 32)
+            .storeUint(msg.queryId, 64)
+            .storeAddress(msg.prevOwner)
+            .storeAddress(msg.prevOwner)
+            .storeUint(0, 1)
+            .storeCoins(0)
+          .endCell()
+        });
 
         self.nfts.set(luck, sender());
       } else {
@@ -69,14 +73,14 @@ contract Task5 with Deployable {
           value: 0,
           bounce: false,
           mode: SendRemainingValue,
-          body: Transfer {
-            queryId: msg.queryId,
-            newOwner: msg.prevOwner,
-            responseDestination: msg.prevOwner,
-            customPayload: null,
-            forwardAmount: 0,
-            forwardPayload: emptySlice()
-          }.toCell()
+          body: beginCell()
+            .storeUint(0x5fcc3d14, 32)
+            .storeUint(msg.queryId, 64)
+            .storeAddress(msg.prevOwner)
+            .storeAddress(msg.prevOwner)
+            .storeUint(0, 1)
+            .storeCoins(0)
+          .endCell()
         });
       }
     } 
@@ -96,12 +100,24 @@ contract Task5 with Deployable {
   }
 
   receive(msg: AdminWithdrawalAllNFTs) {
-    if(sender() != myAddress()) {
-      require(context().value > (ton("1") + self.next_item * ton("0.08")), "Insufficent funds");
-    }
+    require(context().value > (ton("1") + self.next_item * ton("0.08")), "Insufficent funds");
+    require(sender() == self.owner, "Invalid sender");
+    nativeReserve(myBalance() - context().value, 0);
 
-    require(sender() == self.owner || sender() == myAddress(), "Invalid sender");
-    
+    send(SendParameters{
+          to: myAddress(),
+          value: 0,
+          mode: SendRemainingBalance,
+          body: WithdrawalAllNFTsInternal {
+            queryId: msg.queryId
+          }.toCell()
+        });
+  }
+
+  receive(msg: WithdrawalAllNFTsInternal) {
+    require(sender() == myAddress(), "Invalid sender");
+    nativeReserve(myBalance() - context().value, 0);
+
     if(self.next_item >= 100) {
       repeat(100) {
         send(SendParameters{
@@ -123,7 +139,7 @@ contract Task5 with Deployable {
         to: myAddress(),
         value: 0,
         mode: SendRemainingBalance,
-        body: AdminWithdrawalAllNFTs {
+        body: WithdrawalAllNFTsInternal {
           queryId: msg.queryId
         }.toCell()
       });
