@@ -50,7 +50,7 @@ contract Task5 with Deployable {
     }
 
     if(context().value >= ton("2.1") && self.next_item > 0) {
-      nativeReserve(ton("2"), 0);
+      nativeReserve(myBalance() - (context().value - ton("2")), 0);
       let luck: Int = nativeRandomInterval(self.next_item);
  
       if(luck == self.next_item) {
@@ -89,7 +89,7 @@ contract Task5 with Deployable {
      send(SendParameters{
         to: sender(),
         value: 0,
-        mode: SendRemainingValue,
+        mode: SendRemainingValue + SendIgnoreErrors,
         body: Transfer {
           queryId: msg.queryId,
           newOwner: msg.prevOwner,
@@ -132,7 +132,6 @@ contract Task5 with Deployable {
   }
 
   receive(msg: AdminWithdrawalAllNFTsInternal) {
-    throw(123);
     require(sender() == myAddress(), "Invalid sender");
 
     let n: Int = self.next_item - 1;
@@ -142,7 +141,7 @@ contract Task5 with Deployable {
         send(SendParameters{
           to: self.nfts.get(n)!!,
           value: ton("0.08"),
-          mode: SendPayGasSeparately,
+          mode: SendIgnoreErrors,
           body: Transfer {
             queryId: msg.queryId,
             newOwner: self.owner,
@@ -162,7 +161,7 @@ contract Task5 with Deployable {
         send(SendParameters{
           to: self.nfts.get(n)!!,
           value: ton("0.08"),
-          mode: SendPayGasSeparately,
+          mode: SendIgnoreErrors,
           body: Transfer {
             queryId: msg.queryId,
             newOwner: self.owner,
