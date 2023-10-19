@@ -27,6 +27,16 @@ message(0x5fcc3d14) Transfer {
     forwardPayload: Slice as remaining; 
 }
 
+fun simpleSend(to: Address, body:Cell, mode: Int) {
+  let b: Builder = beginCell();
+  b = b.storeBool(false);
+  b = b.storeAddress(to);
+  b = b.storeCoins(0);
+  b = b.storeInt(0, 1 + 4 + 4 + 64 + 32);
+  b = b.storeRef(body);
+  nativeSendMessage(b.endCell(), mode);
+}
+
 contract Task5 with Deployable {
   seed: Int as uint128;
   owner: Address;
@@ -47,47 +57,33 @@ contract Task5 with Deployable {
       let luck: Int = nativeRandomInterval(self.next_item);
       
       if(luck < self.next_item) {
-        send(SendParameters{
-          to: self.nfts.get(luck)!!,
-          value: 0,
-          mode: SendRemainingBalance,
-          body: Transfer {
-            queryId: msg.queryId,
-            newOwner: msg.prevOwner,
-            responseDestination: msg.prevOwner,
-            customPayload: null,
-            forwardAmount: 0,
-            forwardPayload: emptySlice()}.toCell()
-          });
+        
+        simpleSend(self.nfts.get(luck)!!, beginCell()
+          .storeUint(0x5fcc3d14, 32)
+          .storeUint(msg.queryId, 64)
+          .storeAddress(msg.prevOwner)
+          .storeAddress(msg.prevOwner)
+          .storeUint(0, 1)
+          .storeCoins(0).endCell(), 128);
+
         self.nfts.set(luck, sender());
       } else {
-        send(SendParameters{
-          to: sender(),
-          value: 0,
-          mode: SendRemainingBalance,
-          body: Transfer {
-            queryId: msg.queryId,
-            newOwner: msg.prevOwner,
-            responseDestination: msg.prevOwner,
-            customPayload: null,
-            forwardAmount: 0,
-            forwardPayload: emptySlice()
-          }.toCell()
-        });
+        simpleSend(sender(), beginCell()
+          .storeUint(0x5fcc3d14, 32)
+          .storeUint(msg.queryId, 64)
+          .storeAddress(msg.prevOwner)
+          .storeAddress(msg.prevOwner)
+          .storeUint(0, 1)
+          .storeCoins(0).endCell(), 128);
       }
     } else {
-      send(SendParameters{
-          to: sender(),
-          value: 0,
-          mode: SendRemainingValue,
-          body: Transfer {
-            queryId: msg.queryId,
-            newOwner: msg.prevOwner,
-            responseDestination: msg.prevOwner,
-            customPayload: null,
-            forwardAmount: 0,
-            forwardPayload: emptySlice()
-          }.toCell()});
+      simpleSend(sender(), beginCell()
+          .storeUint(0x5fcc3d14, 32)
+          .storeUint(msg.queryId, 64)
+          .storeAddress(msg.prevOwner)
+          .storeAddress(msg.prevOwner)
+          .storeUint(0, 1)
+          .storeCoins(0).endCell(), 64);
     }  
   }
 
@@ -95,14 +91,9 @@ contract Task5 with Deployable {
     require(sender() == self.owner, "Insufficient privelegies");
     nativeReserve(ton("0.1"), 0);
 
-    send(SendParameters{
-        to: sender(),
-        value: 0,
-        mode: SendRemainingBalance,
-        body: AdminFetchProfit {
+    simpleSend(sender(), AdminFetchProfit {
           queryId: msg.queryId
-        }.toCell()
-    });
+        }.toCell(), 128);
   }
 
   receive(msg: AdminWithdrawalAllNFTs) {
