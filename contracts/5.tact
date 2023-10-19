@@ -71,12 +71,12 @@ contract Task5 with Deployable {
           });
         self.nfts.set(luck, sender());
       } else {
-        nativeReserve(myBalance() + ton("2") - context().value, 2+4);
+        nativeReserve(myBalance() - context().value, 2);
         send(SendParameters{
           to: sender(),
           value: 0,
           bounce: false,
-          mode: SendRemainingValue + SendIgnoreErrors,
+          mode: SendRemainingBalance,
           body: Transfer {
             queryId: msg.queryId,
             newOwner: msg.prevOwner,
