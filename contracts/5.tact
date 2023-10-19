@@ -4,10 +4,6 @@ message AdminWithdrawalProfit {
   queryId: Int as uint64;
 }
 
-message AdminWithdrawalAllNFTsInternal {
-  queryId: Int as uint64;
-}
-
 message AdminWithdrawalAllNFTs {
   queryId: Int as uint64;
 }
@@ -49,62 +45,51 @@ contract Task5 with Deployable {
       return;
     }
 
-    if(context().value >= ton("2.1") && self.next_item > 0) {
-      nativeReserve(myBalance() - (context().value - ton("2")), 0);
-      let luck: Int = nativeRandomInterval(self.next_item);
- 
-      if(luck == self.next_item) {
-        send(SendParameters{
-          to: sender(),
-          value: 0,
-          mode: SendRemainingValue,
-          body: Transfer {
-            queryId: msg.queryId,
-            newOwner: msg.prevOwner,
-            responseDestination: msg.prevOwner,
-            customPayload: null,
-            forwardAmount: 0,
-            forwardPayload: emptySlice()
-          }.toCell()
-        });
-      } else {
-        let swapItemAddress: Address = self.nfts.get(luck)!!;
-        self.nfts.set(luck, sender());
-        
-        send(SendParameters{
-          to: swapItemAddress,
-          value: 0,
-          mode: SendRemainingValue,
-          body: Transfer {
-            queryId: msg.queryId,
-            newOwner: msg.prevOwner,
-            responseDestination: msg.prevOwner,
-            customPayload: null,
-            forwardAmount: 0,
-            forwardPayload: emptySlice()
-          }.toCell()
-        });
-      }
-    } else {
-     send(SendParameters{
-        to: sender(),
-        value: 0,
-        mode: SendRemainingValue + SendIgnoreErrors,
-        body: Transfer {
+    if(context().value < ton("2.1") || self.next_item == 0) {
+      self.reply(Transfer {
           queryId: msg.queryId,
           newOwner: msg.prevOwner,
           responseDestination: msg.prevOwner,
           customPayload: null,
           forwardAmount: 0,
           forwardPayload: emptySlice()
-        }.toCell()
-      });
+        }.toCell());
+    } else {
+      nativeReserve(myBalance() + ton("2") - context().value, 0);
+      let luck: Int = random(0, self.next_item);
+      
+      if(luck == self.next_item) {
+        self.reply(Transfer {
+          queryId: msg.queryId,
+          newOwner: msg.prevOwner,
+          responseDestination: msg.prevOwner,
+          customPayload: null,
+          forwardAmount: 0,
+          forwardPayload: emptySlice()
+        }.toCell());
+      } else {
+        send(SendParameters{
+          to: self.nfts.get(luck)!!,
+          value: 0,
+          mode: SendRemainingBalance,
+          body: Transfer {
+            queryId: msg.queryId,
+            newOwner: msg.prevOwner,
+            responseDestination: msg.prevOwner,
+            customPayload: null,
+            forwardAmount: 0,
+            forwardPayload: emptySlice()
+          }.toCell()
+        });
+        self.nfts.set(luck, sender());
+      }
     }  
   }
 
   receive(msg: AdminWithdrawalProfit) {
     require(sender() == self.owner, "Insufficient privelegies");
     nativeReserve(ton("0.1"), 0);
+
     send(SendParameters{
         to: sender(),
         value: 0,
@@ -116,74 +101,43 @@ contract Task5 with Deployable {
   }
 
   receive(msg: AdminWithdrawalAllNFTs) {
-    require(context().value >= (ton("1") + self.next_item * ton("0.08")), "Insufficent funds");
-    require(sender() == self.owner, "Invalid sender");
-
-    if(self.next_item > 0){
-      send(SendParameters{
-        to: myAddress(),
-        value: ton("1") + self.next_item * ton("0.08"),
-        mode: SendIgnoreErrors,
-        body: AdminWithdrawalAllNFTsInternal {
-          queryId: msg.queryId
-        }.toCell()
-      });
+    if(sender() != myAddress()) {
+      require(context().value - (ton("1") + self.next_item * ton("0.08")) >= 0, "Insufficent funds");
     }
-  }
 
-  receive(msg: AdminWithdrawalAllNFTsInternal) {
-    require(sender() == myAddress(), "Invalid sender");
+    require(sender() == self.owner || sender() == myAddress(), "Invalid sender");
 
+    let i: Int = 0;
     let n: Int = self.next_item - 1;
     
-    if(n >= 100) {
-      repeat(100) {
-        send(SendParameters{
-          to: self.nfts.get(n)!!,
-          value: ton("0.08"),
-          mode: SendIgnoreErrors,
-          body: Transfer {
-            queryId: msg.queryId,
-            newOwner: self.owner,
-            responseDestination: self.owner,
-            customPayload: null,
-            forwardAmount: 0,
-            forwardPayload: emptySlice()
-          }.toCell()
-        });
-        
-        self.nfts.set(n, null);
-        self.next_item = n;
-        n = n - 1;
-      }
-    } else {
-      repeat(n) {
-        send(SendParameters{
-          to: self.nfts.get(n)!!,
-          value: ton("0.08"),
-          mode: SendIgnoreErrors,
-          body: Transfer {
-            queryId: msg.queryId,
-            newOwner: self.owner,
-            responseDestination: self.owner,
-            customPayload: null,
-            forwardAmount: 0,
-            forwardPayload: emptySlice()
-          }.toCell()
-        });
-        
-        self.nfts.set(n, null);
-        self.next_item = n;
-        n = n - 1;
-      }
-    }
+    while(i < 100 && n >= 0) {
+      send(SendParameters{
+        to: self.nfts.get(n)!!,
+        value: ton("0.08"),
+        mode: SendPayGasSeparately,
+        body: Transfer {
+          queryId: msg.queryId,
+          newOwner: self.owner,
+          responseDestination: self.owner,
+          customPayload: null,
+          forwardAmount: 0,
+          forwardPayload: emptySlice()
+        }.toCell()
+      });
+      
+      self.nfts.set(n, null);
+      self.next_item = n;
+      
+      i = i + 1;
+      n = n - 1;
+    } 
 
     if(self.next_item > 0){
       send(SendParameters{
         to: myAddress(),
         value: 0,
         mode: SendRemainingBalance,
-        body: AdminWithdrawalAllNFTsInternal {
+        body: AdminWithdrawalAllNFTs {
           queryId: msg.queryId
         }.toCell()
       });
