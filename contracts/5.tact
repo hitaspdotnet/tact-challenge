@@ -42,34 +42,27 @@ contract Task5 with Deployable {
     if(msg.prevOwner == self.owner) {
       self.nfts.set(self.next_item, sender());
       self.next_item = self.next_item + 1;
-      return;
-    }
-
-    if(context().value < ton("2.1") || self.next_item == 0) {
-      self.reply(Transfer {
-          queryId: msg.queryId,
-          newOwner: msg.prevOwner,
-          responseDestination: msg.prevOwner,
-          customPayload: null,
-          forwardAmount: 0,
-          forwardPayload: emptySlice()
-        }.toCell());
-    } else {
+    } else if(context().value > ton("2.1")) {
       nativeReserve(myBalance() + ton("2") - context().value, 0);
       let luck: Int = random(0, self.next_item);
       
-      if(luck == self.next_item) {
-        self.reply(Transfer {
-          queryId: msg.queryId,
-          newOwner: msg.prevOwner,
-          responseDestination: msg.prevOwner,
-          customPayload: null,
-          forwardAmount: 0,
-          forwardPayload: emptySlice()
-        }.toCell());
-      } else {
+      if(luck < self.next_item) {
         send(SendParameters{
           to: self.nfts.get(luck)!!,
+          value: 0,
+          mode: SendRemainingBalance,
+          body: Transfer {
+            queryId: msg.queryId,
+            newOwner: msg.prevOwner,
+            responseDestination: msg.prevOwner,
+            customPayload: null,
+            forwardAmount: 0,
+            forwardPayload: emptySlice()}.toCell()
+          });
+        self.nfts.set(luck, sender());
+      } else {
+        send(SendParameters{
+          to: sender(),
           value: 0,
           mode: SendRemainingBalance,
           body: Transfer {
@@ -81,8 +74,20 @@ contract Task5 with Deployable {
             forwardPayload: emptySlice()
           }.toCell()
         });
-        self.nfts.set(luck, sender());
       }
+    } else {
+      send(SendParameters{
+          to: sender(),
+          value: 0,
+          mode: SendRemainingValue,
+          body: Transfer {
+            queryId: msg.queryId,
+            newOwner: msg.prevOwner,
+            responseDestination: msg.prevOwner,
+            customPayload: null,
+            forwardAmount: 0,
+            forwardPayload: emptySlice()
+          }.toCell()});
     }  
   }
 
