@@ -67,12 +67,12 @@ contract Task5 with Deployable {
 
         self.nfts.set(luck, sender());
       } else {
-        nativeReserve(myBalance() - context().value, 2);
+        nativeReserve(myBalance() - context().value, 0);
         send(SendParameters{
           to: sender(),
           value: 0,
           bounce: false,
-          mode: SendRemainingValue,
+          mode: SendRemainingValue ,
           body: beginCell()
             .storeUint(0x5fcc3d14, 32)
             .storeUint(msg.queryId, 64)
