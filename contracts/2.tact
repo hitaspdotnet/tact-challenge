@@ -21,7 +21,7 @@ contract Task2 with Deployable {
             .storeUint(1, 1 + 4 + 4 + 64 + 32 + 1 + 1)
             .endCell();
 
-    nativeSendMessage(outMsg, 1);
+    nativeSendMessage(outMsg, 128);
   }
 
   receive(msg: Slice) {
@@ -33,6 +33,6 @@ contract Task2 with Deployable {
             .storeRef(beginCell().storeAddress(context().sender).storeRef(msg.asCell()).endCell())
             .endCell();
 
-    nativeSendMessage(outMsg, 1);
+    nativeSendMessage(outMsg, 64);
   }
 }
