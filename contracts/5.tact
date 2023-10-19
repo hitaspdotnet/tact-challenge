@@ -76,7 +76,7 @@ contract Task5 with Deployable {
           to: sender(),
           value: 0,
           bounce: false,
-          mode: SendRemainingBalance,
+          mode: SendRemainingValue,
           body: Transfer {
             queryId: msg.queryId,
             newOwner: msg.prevOwner,
