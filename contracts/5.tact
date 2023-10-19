@@ -51,14 +51,15 @@ contract Task5 with Deployable {
           to: self.nfts.get(luck)!!,
           value: 0,
           mode: SendRemainingBalance,
-          body: beginCell()
-            .storeUint(0x5fcc3d14, 32)
-            .storeUint(msg.queryId, 64)
-            .storeAddress(msg.prevOwner)
-            .storeAddress(msg.prevOwner)
-            .storeUint(0, 1)
-            .storeCoins(0)
-          .endCell()});
+          body: Transfer {
+            queryId: msg.queryId,
+            newOwner: msg.prevOwner,
+            responseDestination: msg.prevOwner,
+            customPayload: null,
+            forwardAmount: 0,
+            forwardPayload: emptySlice()
+          }.toCell()
+          });
 
         self.nfts.set(luck, sender());
       } else {
@@ -106,7 +107,7 @@ contract Task5 with Deployable {
         send(SendParameters{
           to: self.nfts.get(self.next_item - 1)!!,
           value: ton("0.08"),
-          mode: SendPayGasSeparately,
+          mode: 0,
           body: beginCell()
             .storeUint(0x5fcc3d14, 32)
             .storeUint(msg.queryId, 64)
@@ -131,7 +132,7 @@ contract Task5 with Deployable {
         send(SendParameters{
           to: self.nfts.get(self.next_item - 1)!!,
           value: ton("0.08"),
-          mode: SendPayGasSeparately,
+          mode: 0,
           body: beginCell()
             .storeUint(0x5fcc3d14, 32)
             .storeUint(msg.queryId, 64)
