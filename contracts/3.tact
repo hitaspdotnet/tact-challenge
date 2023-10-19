@@ -53,9 +53,11 @@ contract Task3 with Deployable {
           );
         } else {
           let swapAmount:Int = (self.bAmount * self.decimal / self.aAmount) * msg.amount / self.decimal;
-          self.forward(
-            self.jettonAddressB,
-            TokenTransfer {
+          send(SendParameters{
+            to: self.jettonAddressB,
+            value: 0,
+            mode: SendRemainingValue,
+            body: TokenTransfer {
               queryId: 0,
               amount: swapAmount,
               destination: msg.from, 
@@ -63,10 +65,8 @@ contract Task3 with Deployable {
               customPayload: null,
               forwardTonAmount: ton("0.01"), 
               forwardPayload: emptySlice()
-            }.toCell(),
-            true,
-            null
-          );
+            }.toCell()
+          });
           
           self.aAmount = self.aAmount + msg.amount;
           self.bAmount = self.bAmount - swapAmount;
@@ -85,9 +85,11 @@ contract Task3 with Deployable {
           );
         } else {
           let swapAmount:Int = (self.aAmount * self.decimal / self.bAmount) * msg.amount / self.decimal;
-          self.forward(
-            self.jettonAddressA,
-            TokenTransfer {
+          send(SendParameters{
+            to: self.jettonAddressA,
+            value: 0,
+            mode: SendRemainingValue,
+            body: TokenTransfer {
               queryId: 0,
               amount: swapAmount,
               destination: msg.from, 
@@ -95,10 +97,8 @@ contract Task3 with Deployable {
               customPayload: null,
               forwardTonAmount: ton("0.01"), 
               forwardPayload: emptySlice()
-            }.toCell(),
-            true,
-            null
-          );
+            }.toCell()
+          });
           
           self.bAmount = self.bAmount + msg.amount;
           self.aAmount = self.aAmount - swapAmount;
