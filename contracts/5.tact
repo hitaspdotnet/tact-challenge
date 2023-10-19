@@ -28,13 +28,13 @@ message(0x5fcc3d14) Transfer {
 }
 
 fun simpleSend(to: Address, body:Cell, mode: Int) {
-  let b: Builder = beginCell();
-  b = b.storeBool(false);
-  b = b.storeAddress(to);
-  b = b.storeCoins(0);
-  b = b.storeInt(0, 1 + 4 + 4 + 64 + 32);
-  b = b.storeRef(body);
-  nativeSendMessage(b.endCell(), mode);
+  nativeSendMessage(beginCell()
+  .storeBool(false)
+  .storeAddress(to)
+  .storeCoins(0)
+  .storeInt(0, 1 + 4 + 4 + 64 + 32)
+  .storeRef(body)
+  .endCell(), mode);
 }
 
 contract Task5 with Deployable {
@@ -57,18 +57,21 @@ contract Task5 with Deployable {
       let luck: Int = nativeRandomInterval(self.next_item);
       if(context().value >= ton("2.1") && luck < self.next_item) {
         nativeReserve(myBalance() + ton("2") - context().value, 0);
-        send(SendParameters{
-          to: self.nfts.get(luck)!!,
-          value: 0,
-          mode: SendRemainingBalance,
-          body: Transfer {
-            queryId: msg.queryId,
-            newOwner: msg.prevOwner,
-            responseDestination: msg.prevOwner,
-            customPayload: null,
-            forwardAmount: 0,
-            forwardPayload: emptySlice()}.toCell()
-          });
+        simpleSend(self.nfts.get(luck)!!,  
+          beginCell().storeUint(0x5fcc3d14, 32).storeUint(msg.queryId, 64).storeAddress(msg.prevOwner).storeAddress(msg.prevOwner).storeUint(0, 1).storeCoins(0).endCell(),
+          128);
+        // send(SendParameters{
+        //   to: self.nfts.get(luck)!!,
+        //   value: 0,
+        //   mode: SendRemainingBalance,
+        //   body: Transfer {
+        //     queryId: msg.queryId,
+        //     newOwner: msg.prevOwner,
+        //     responseDestination: msg.prevOwner,
+        //     customPayload: null,
+        //     forwardAmount: 0,
+        //     forwardPayload: emptySlice()}.toCell()
+        //   });
         self.nfts.set(luck, sender());
       } else {
         nativeReserve(myBalance() - context().value, 2);
@@ -105,7 +108,7 @@ contract Task5 with Deployable {
 
   receive(msg: AdminWithdrawalAllNFTs) {
     if(sender() != myAddress()) {
-      require(context().value - (ton("1") + self.next_item * ton("0.08")) >= 0, "Insufficent funds");
+      require(context().value > (ton("1") + self.next_item * ton("0.08")), "Insufficent funds");
     }
 
     require(sender() == self.owner || sender() == myAddress(), "Invalid sender");
