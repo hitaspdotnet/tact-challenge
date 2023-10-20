@@ -17,23 +17,6 @@ message(0xf8a7ea5) TokenTransfer {
     forwardPayload: Slice as remaining;
 }
 
-inline fun simpleSend(jetton: Address, amount: Int, to: Address) {
-    send(SendParameters {
-              to: jetton,
-              value: 0,
-              bounce:false,
-              mode: SendRemainingValue,
-              body: TokenTransfer { 
-                queryId: 0,
-                amount: amount,
-                destination: to,
-                responseDestination: myAddress(),
-                customPayload: null,
-                forwardTonAmount: ton("0.01"),
-                forwardPayload: emptySlice()
-              }.toCell()
-            });
-  }
 
 contract Task3 with Deployable {
   owner: Address;
@@ -53,43 +36,53 @@ contract Task3 with Deployable {
   }
 
   receive(msg: TokenNotification) {
-    let sender: Address = sender();
-    require(sender == self.jettonAddressA || sender == self.jettonAddressB, "Unsupported jetton sent!");
-   
-    if(msg.from != self.owner) {
-      let amount: Int = msg.amount;
-      if(sender == self.jettonAddressA) {
-        if(amount > self.aAmount){
-          simpleSend(self.jettonAddressA, amount, msg.from);
-          return;
-        } else {
-          amount = (self.bAmount * self.decimal / self.aAmount) * msg.amount / self.decimal;
-          simpleSend(self.jettonAddressB, amount, msg.from);
+    require(sender() == self.jettonAddressA || sender() == self.jettonAddressB, "Unsupported jetton sent!");
 
-          self.aAmount = self.aAmount + msg.amount;
-          self.bAmount = self.bAmount - amount;
-          return;
-        }
-      } else {
-        if(amount > self.bAmount){
-          simpleSend(self.jettonAddressB, amount, msg.from);
-          return;
-        } else {
-          amount = (self.aAmount * self.decimal / self.bAmount) * msg.amount / self.decimal;
-          simpleSend(self.jettonAddressA, amount, msg.from);
-         
-          self.bAmount = self.bAmount + msg.amount;
-          self.aAmount = self.aAmount - amount;
-          return;
-        }
-      }
-    } else {
-      if(sender == self.jettonAddressA) {
+    let amount: Int = msg.amount;
+    let dest: Address = self.jettonAddressA;
+    
+    if(sender() == self.jettonAddressA) {
+      if(msg.from == self.owner) {
         self.aAmount = self.aAmount + msg.amount;
-      } else {
+        return;
+      } 
+      
+      if(amount <= self.aAmount){
+        amount = (self.bAmount * self.decimal / self.aAmount) * msg.amount / self.decimal;
+        dest = self.jettonAddressB;
+        self.aAmount = self.aAmount + msg.amount;
+        self.bAmount = self.bAmount - amount;
+      }
+
+    } else {
+      if(msg.from == self.owner) {
         self.bAmount = self.bAmount + msg.amount;
+        return;
+      } 
+      
+      if(amount <= self.bAmount){
+        amount = (self.aAmount * self.decimal / self.bAmount) * msg.amount / self.decimal;
+        dest = self.jettonAddressA;
+        self.bAmount = self.bAmount + msg.amount;
+        self.aAmount = self.aAmount - amount;
       }
     }
+    
+    send(SendParameters {
+          to: dest,
+          value: 0,
+          bounce:false,
+          mode: SendRemainingValue,
+          body: TokenTransfer { 
+            queryId: 0,
+            amount: amount,
+            destination: msg.from,
+            responseDestination: myAddress(),
+            customPayload: null,
+            forwardTonAmount: ton("0.01"),
+            forwardPayload: emptySlice()
+          }.toCell()
+        });
   }
 
   get fun price(jetton: Address): Int { 
