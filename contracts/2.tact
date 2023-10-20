@@ -19,7 +19,7 @@ contract Task2 with Deployable {
             .storeAddress(msg.sender)
             .storeCoins(0)
             .storeUint(1, 1 + 4 + 4 + 64 + 32 + 1 + 1)
-            .endCell(), 64);
+            .endCell(), 128);
     // send(SendParameters {
     //   to: msg.sender,
     //   value: 0,
