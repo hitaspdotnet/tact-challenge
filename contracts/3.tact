@@ -33,7 +33,8 @@ inline fun simpleSend(jetton: Address, amount: Int, to: Address) {
                 forwardPayload: emptySlice()
               }.toCell()
             });
-  }
+}
+
 
 contract Task3 with Deployable {
   owner: Address;
@@ -55,32 +56,27 @@ contract Task3 with Deployable {
   receive(msg: TokenNotification) {
     let sender: Address = sender();
     require(sender == self.jettonAddressA || sender == self.jettonAddressB, "Unsupported jetton sent!");
-   
+    
     if(msg.from != self.owner) {
-      let amount: Int = msg.amount;
       if(sender == self.jettonAddressA) {
-        if(amount > self.aAmount){
-          simpleSend(self.jettonAddressA, amount, msg.from);
-          return;
+        if(msg.amount > self.aAmount){
+          simpleSend(sender, msg.amount, msg.from);
         } else {
-          amount = (self.bAmount * self.decimal / self.aAmount) * msg.amount / self.decimal;
-          simpleSend(self.jettonAddressB, amount, msg.from);
-
+          let swapAmount:Int = (self.bAmount * self.decimal / self.aAmount) * msg.amount / self.decimal;
+          simpleSend(self.jettonAddressB, swapAmount, msg.from);
+          
           self.aAmount = self.aAmount + msg.amount;
-          self.bAmount = self.bAmount - amount;
-          return;
+          self.bAmount = self.bAmount - swapAmount;
         }
       } else {
-        if(amount > self.bAmount){
-          simpleSend(self.jettonAddressB, amount, msg.from);
-          return;
+        if(msg.amount > self.bAmount){
+          simpleSend(self.jettonAddressB, msg.amount, msg.from);
         } else {
-          amount = (self.aAmount * self.decimal / self.bAmount) * msg.amount / self.decimal;
-          simpleSend(self.jettonAddressA, amount, msg.from);
-         
+          let swapAmount:Int = (self.aAmount * self.decimal / self.bAmount) * msg.amount / self.decimal;
+          simpleSend(self.jettonAddressA, swapAmount, msg.from);
+          
           self.bAmount = self.bAmount + msg.amount;
-          self.aAmount = self.aAmount - amount;
-          return;
+          self.aAmount = self.aAmount - swapAmount;
         }
       }
     } else {
