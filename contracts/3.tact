@@ -17,6 +17,25 @@ message(0xf8a7ea5) TokenTransfer {
     forwardPayload: Slice as remaining;
 }
 
+inline fun simpleSend(jetton: Address, amount: Int, to: Address) {
+    send(SendParameters {
+              to: jetton,
+              value: 0,
+              bounce:false,
+              mode: SendRemainingValue,
+              body: TokenTransfer { 
+                queryId: 0,
+                amount: amount,
+                destination: to,
+                responseDestination: myAddress(),
+                customPayload: null,
+                forwardTonAmount: ton("0.01"),
+                forwardPayload: emptySlice()
+              }.toCell()
+            });
+}
+
+
 contract Task3 with Deployable {
   owner: Address;
   aAmount: Int;
@@ -34,40 +53,6 @@ contract Task3 with Deployable {
     self.decimal = 1000000000;
   }
 
-  fun simpleSend(jetton: Address, amount: Int, to: Address) {
-    // let b: Builder = beginCell();
-    //   b = b.storeBool(false)
-    //   .storeAddress(to)
-    //   .storeCoins(0)
-    //   .storeInt(0, 1 + 4 + 4 + 64 + 32)
-    //   .storeRef(TokenTransfer { 
-    //               queryId: 0,
-    //               amount: amount,
-    //               destination: to,
-    //               responseDestination: myAddress(),
-    //               customPayload: null,
-    //               forwardTonAmount: ton("0.01"),
-    //               forwardPayload: emptySlice()
-    //             }.toCell());
-    // nativeSendMessage(b.endCell(), 64);
-
-      send(SendParameters {
-                to: jetton,
-                value: 0,
-                bounce:false,
-                mode: SendRemainingValue,
-                body: TokenTransfer { 
-                  queryId: 0,
-                  amount: amount,
-                  destination: to,
-                  responseDestination: myAddress(),
-                  customPayload: null,
-                  forwardTonAmount: ton("0.01"),
-                  forwardPayload: emptySlice()
-                }.toCell()
-              });
-  }
-
   receive(msg: TokenNotification) {
     let sender: Address = sender();
     require(sender == self.jettonAddressA || sender == self.jettonAddressB, "Unsupported jetton sent!");
@@ -75,20 +60,20 @@ contract Task3 with Deployable {
     if(msg.from != self.owner) {
       if(sender == self.jettonAddressA) {
         if(msg.amount > self.aAmount){
-          self.simpleSend(sender, msg.amount, msg.from);
+          simpleSend(sender, msg.amount, msg.from);
         } else {
           let swapAmount:Int = (self.bAmount * self.decimal / self.aAmount) * msg.amount / self.decimal;
-          self.simpleSend(self.jettonAddressB, swapAmount, msg.from);
+          simpleSend(self.jettonAddressB, swapAmount, msg.from);
           
           self.aAmount = self.aAmount + msg.amount;
           self.bAmount = self.bAmount - swapAmount;
         }
       } else {
         if(msg.amount > self.bAmount){
-          self.simpleSend(self.jettonAddressB, msg.amount, msg.from);
+          simpleSend(self.jettonAddressB, msg.amount, msg.from);
         } else {
           let swapAmount:Int = (self.aAmount * self.decimal / self.bAmount) * msg.amount / self.decimal;
-          self.simpleSend(self.jettonAddressA, swapAmount, msg.from);
+          simpleSend(self.jettonAddressA, swapAmount, msg.from);
           
           self.bAmount = self.bAmount + msg.amount;
           self.aAmount = self.aAmount - swapAmount;
