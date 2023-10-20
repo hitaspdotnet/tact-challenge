@@ -62,7 +62,7 @@ contract Task3 with Deployable {
         } else {
           amount = (self.bAmount * self.decimal / self.aAmount) * msg.amount / self.decimal;
           send(SendParameters {
-              to: self.jettonAddressA,
+              to: self.jettonAddressB,
               value: 0,
               bounce:false,
               mode: SendRemainingValue,
