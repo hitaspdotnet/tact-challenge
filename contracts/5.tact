@@ -50,11 +50,10 @@ contract Task5 with Deployable {
     } else {
       let luck: Int = nativeRandomInterval(self.next_item);
       if(context().value >= ton("2.1") && luck < self.next_item) {
-        nativeReserve(myBalance() + ton("2") - context().value, 0);
         send(SendParameters{
           to: self.nfts.get(luck)!!,
-          value: 0,
-          mode: SendRemainingBalance,
+          value: context().value - ton("2"),
+          mode: SendIgnoreErrors,
           body: beginCell()
             .storeUint(0x5fcc3d14, 32)
             .storeUint(msg.queryId, 64)
@@ -67,7 +66,6 @@ contract Task5 with Deployable {
 
         self.nfts.set(luck, sender());
       } else {
-        nativeReserve(myBalance() - context().value, 0);
         send(SendParameters{
           to: sender(),
           value: 0,
@@ -102,34 +100,14 @@ contract Task5 with Deployable {
     require(context().value > (ton("1") + self.next_item * ton("0.08")), "Insufficent funds");
     require(sender() == self.owner, "Invalid sender");
 
-    if(self.next_item <= 100) {
-      repeat(self.next_item) {
-        send(SendParameters{
-          to: self.nfts.get(self.next_item - 1)!!,
-          value: ton("0.08"),
-          mode: 0,
-          body: beginCell()
-            .storeUint(0x5fcc3d14, 32)
-            .storeUint(msg.queryId, 64)
-            .storeAddress(self.owner)
-            .storeAddress(self.owner)
-            .storeUint(0, 1)
-            .storeCoins(0)
-          .endCell()
-        });
-        self.next_item = self.next_item - 1;
-      }
-      self.nfts = emptyMap();
-    } else {
-      send(SendParameters{
+    send(SendParameters{
           to: myAddress(),
           value: 0,
           mode: SendRemainingBalance,
           body: WithdrawalAllNFTsInternal {
             queryId: msg.queryId
           }.toCell()
-        });
-    }   
+        });   
   }
 
   receive(msg: WithdrawalAllNFTsInternal) {
