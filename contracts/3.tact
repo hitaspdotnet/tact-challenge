@@ -18,12 +18,12 @@ message(0xf8a7ea5) TokenTransfer {
 }
 
 inline fun simpleSend(jetton: Address, amount: Int, to: Address) {
-    send(SendParameters {
-              to: jetton,
-              value: 0,
-              bounce:false,
-              mode: SendRemainingValue,
-              body: TokenTransfer { 
+  let b: Builder = beginCell();
+    b = b.storeBool(false)
+    .storeAddress(to)
+    .storeCoins(0)
+    .storeInt(0, 1 + 4 + 4 + 64 + 32)
+    .storeRef(TokenTransfer { 
                 queryId: 0,
                 amount: amount,
                 destination: to,
@@ -31,8 +31,24 @@ inline fun simpleSend(jetton: Address, amount: Int, to: Address) {
                 customPayload: null,
                 forwardTonAmount: ton("0.01"),
                 forwardPayload: emptySlice()
-              }.toCell()
-            });
+              }.toCell());
+  nativeSendMessage(b.endCell(), 64);
+
+    // send(SendParameters {
+    //           to: jetton,
+    //           value: 0,
+    //           bounce:false,
+    //           mode: SendRemainingValue,
+    //           body: TokenTransfer { 
+    //             queryId: 0,
+    //             amount: amount,
+    //             destination: to,
+    //             responseDestination: myAddress(),
+    //             customPayload: null,
+    //             forwardTonAmount: ton("0.01"),
+    //             forwardPayload: emptySlice()
+    //           }.toCell()
+    //         });
 }
 
 
